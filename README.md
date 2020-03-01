@@ -1,2 +1,2 @@
-# python_makao
+# Python Makao
 Makao card game 
