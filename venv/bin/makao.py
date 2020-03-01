@@ -18,6 +18,7 @@ class CardValue(IntEnum):
     King = 13
     Ace = 14
 
+# card info
 class Card:
     def __init__(self, suit, value):
         self.suit = suit
@@ -27,6 +28,7 @@ class Card:
         print("{} of {}".format(self.value, self.suit))
 
 
+# deck info and methods
 class Deck:
     def __init__(self):
         self.cards = []
@@ -46,3 +48,9 @@ class Deck:
         for c in self.cards:
             c.show()
 
+
+#player info
+class Player:
+    def __init__(self, name):
+        self.name = name
+        
