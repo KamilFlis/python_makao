@@ -27,4 +27,22 @@ class Card:
         print("{} of {}".format(self.value, self.suit))
 
 
-    
+class Deck:
+    def __init__(self):
+        self.cards = []
+        build()
+        shuffle()
+
+    def build(self):
+        suits = ['Spades', 'Clubs', 'Hearts', 'Diamonds']
+        for s in suits:
+            for val in CardValue:
+                self.cards.append(Card(s, val.name))
+
+    def shuffle(self):
+        random.shuffle(self.cards)
+
+    def show(self):
+        for c in self.cards:
+            c.show()
+
