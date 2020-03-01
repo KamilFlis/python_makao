@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import random
 from enum import Enum
 from enum import IntEnum
@@ -32,8 +33,8 @@ class Card:
 class Deck:
     def __init__(self):
         self.cards = []
-        build()
-        shuffle()
+        self.build()
+        self.shuffle()
 
     def build(self):
         suits = ['Spades', 'Clubs', 'Hearts', 'Diamonds']
@@ -54,3 +55,6 @@ class Player:
     def __init__(self, name):
         self.name = name
         
+=======
+print("hrllo")
+>>>>>>> pulling
