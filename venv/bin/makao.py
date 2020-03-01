@@ -19,16 +19,6 @@ class CardValue(IntEnum):
     Ace = 14
 
 
-specialCards = [CardValue.Two, CardValue.Three, CardValue.Four, CardValue.Jack, CardValue.Ace]
-#specialCards = [2, 3, 4, 11, 14]
-
-class CardSuit(Enum):
-    SPADES = 'Spades'
-    CLUBS = 'Clubs'
-    HEARTS = 'Hearts'
-    DIAMONDS = 'Diamonds'
-
-
 # card info
 class Card:
     def __init__(self, suit, value):
@@ -36,7 +26,7 @@ class Card:
         self.value = value
 
     def show(self):
-        print("{} of {}".format(self.value.name, self.suit.value))
+        print("{} of {}".format(self.value, self.suit))
 
 
 # deck info and methods
@@ -44,11 +34,13 @@ class Deck:
     def __init__(self):
         self.cards = []
         self.build()
+        self.shuffle()
 
     def build(self):
-        for suit in CardSuit:
+        suits = ['Spades', 'Clubs', 'Hearts', 'Diamonds']
+        for s in suits:
             for val in CardValue:
-                self.cards.append(Card(suit, val))
+                self.cards.append(Card(s, val.name))
 
     def shuffle(self):
         random.shuffle(self.cards)
@@ -57,65 +49,12 @@ class Deck:
         for c in self.cards:
             c.show()
 
-    def draw(self):
-        return self.cards.pop()
 
-    def count(self):
-        return len(self.cards)
-
-    # special cards - to deleeete
-    def wypisz(self):
-        counter=0
-        for card in self.cards:
-            if not (((card.value is CardValue.King)
-                    and (card.suit is  CardSuit.HEARTS
-                         or card.suit is  CardSuit.CLUBS))
-                    or card.value in specialCards):
-                counter+=1
-                card.show()
-        print(counter)
-
-#player info
+# player info
 class Player:
     def __init__(self, name):
-        self.hand = []
         self.name = name
 
-    def showHand(self):
-        for card in self.hand:
-            card.show()
-
-
-class Game:
-    def __init__(self):
-        self.players = [Player("Kamil"), Player("Computer")]
-        self.deck = Deck()
-        self.table = []
-        self.deal()
-
-    #gives player 5 cards and places 1 card on table
-    def deal(self):
-        self.deck.shuffle()
-        for card in range(0, 5):
-            for player in self.players:
-                player.hand.append(self.deck.draw())
-
-        card = self.deck.cards[len(self.deck.cards) - 1]
-        # Correct this condition (special card cant be first on table)
-        if not (((card.value is CardValue.King)
-              and (card.suit is CardSuit.HEARTS
-                   or card.suit is CardSuit.CLUBS))
-             or card.value in specialCards):
-            self.table.append(self.deck.draw())
-
-        for card in self.table:
-            card.show()
-        print("Cards in deck:", self.deck.count())
-
-
-#deck = Deck()
-#deck.show()
-#deck.wypisz()
-
-makao = Game()
-#makao.players[0].showHand()
+deck = Deck()
+#deck.build()
+deck.show()
