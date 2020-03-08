@@ -18,9 +18,8 @@ class CardValue(IntEnum):
     King = 13
     Ace = 14
 
-
+# special cards in game - 2, 3, 4, jack, ace, king of spades and king of hearts
 specialCards = [CardValue.Two, CardValue.Three, CardValue.Four, CardValue.Jack, CardValue.Ace]
-#specialCards = [2, 3, 4, 11, 14]
 
 class CardSuit(Enum):
     SPADES = 'Spades'
@@ -37,6 +36,12 @@ class Card:
 
     def show(self):
         print("{} of {}".format(self.value.name, self.suit.value))
+
+    def is_special(self):
+        return (((self.value is CardValue.King)
+              and (self.suit is CardSuit.HEARTS
+                   or self.suit is CardSuit.SPADES))
+             or self.value in specialCards)
 
 
 # deck info and methods
@@ -63,14 +68,11 @@ class Deck:
     def count(self):
         return len(self.cards)
 
-    # special cards - to deleeete
+    # special cards - temporary method
     def wypisz(self):
         counter=0
         for card in self.cards:
-            if not (((card.value is CardValue.King)
-                    and (card.suit is  CardSuit.HEARTS
-                         or card.suit is  CardSuit.CLUBS))
-                    or card.value in specialCards):
+            if card.is_special():
                 counter+=1
                 card.show()
         print(counter)
@@ -82,7 +84,7 @@ class Player:
         self.hand = []
         self.name = name
 
-    def showHand(self):
+    def show_hand(self):
         for card in self.hand:
             card.show()
 
@@ -94,28 +96,33 @@ class Game:
         self.table = []
         self.deal()
 
-    #gives player 5 cards and places 1 card on table
+    # gives player 5 cards and places 1 card on table
     def deal(self):
         self.deck.shuffle()
+        # add 5 cards to player's hand
         for card in range(0, 5):
             for player in self.players:
                 player.hand.append(self.deck.draw())
 
-        card = self.deck.cards[len(self.deck.cards) - 1]
 
-        # Correct this condition (special card cant be first on table)
-        #while len(self.table) is 0:     <------- condition to loop if first card was special
-            if not (((card.value is CardValue.King)
-                  and (card.suit is CardSuit.HEARTS
-                       or card.suit is CardSuit.CLUBS))
-                or card.value in specialCards):
+        while len(self.table) is 0:    # <------- condition to loop if first card was special
+            topCard = self.deck.cards[len(self.deck.cards) - 1]
+            # Checks if first card on table isn't special
+            if not topCard.is_special():
                 self.table.append(self.deck.draw())
+            else:
+                self.deck.shuffle()
 
-        for card in self.table:
-            card.show()
         print("Cards in deck:", self.deck.count())
         print("On table: ")
         self.table[0].show()
+
+    def put_on_table(self):
+        pass
+
+
+    def can_put(self):
+        pass
 
 
 #deck = Deck()
