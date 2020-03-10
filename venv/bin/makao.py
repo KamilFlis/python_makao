@@ -18,15 +18,16 @@ class CardValue(IntEnum):
     King = 13
     Ace = 14
 
-# special cards in game - 2, 3, 4, jack, ace, king of spades and king of hearts
-specialCards = [CardValue.Two, CardValue.Three, CardValue.Four, CardValue.Jack, CardValue.Ace]
-
 class CardSuit(Enum):
     SPADES = 'Spades'
     CLUBS = 'Clubs'
     HEARTS = 'Hearts'
     DIAMONDS = 'Diamonds'
 
+
+# special cards in game - 2, 3, 4, jack, ace, king of spades and king of hearts
+specialCards = { CardValue.Two, CardValue.Three, CardValue.Four, CardValue.Jack,
+                 CardValue.Ace, (CardValue.King, CardSuit.SPADES), (CardValue.King, CardSuit.HEARTS)}
 
 # card info
 class Card:
@@ -38,10 +39,7 @@ class Card:
         print("{} of {}".format(self.value.name, self.suit.value))
 
     def is_special(self):
-        return (((self.value is CardValue.King)
-              and (self.suit is CardSuit.HEARTS
-                   or self.suit is CardSuit.SPADES))
-             or self.value in specialCards)
+        return self in specialCards
 
 
 # deck info and methods
@@ -131,5 +129,5 @@ class Game:
 
 makao = Game()
 print("On hand")
-makao.players[0].showHand()
+makao.players[0].show_hand()
 
