@@ -1,6 +1,10 @@
+import pygame
 import random
 from enum import Enum
 from enum import IntEnum
+
+# path to card images
+cards_path = '/home/kamil/Code/Python/Makao/cards_resized_renamed/'
 
 # card values - name + value
 class CardValue(IntEnum):
@@ -31,9 +35,10 @@ specialCards = { CardValue.Two, CardValue.Three, CardValue.Four, CardValue.Jack,
 
 # card info
 class Card:
-    def __init__(self, suit, value):
+    def __init__(self, suit, value, img_path):
         self.suit = suit
         self.value = value
+        self.image = pygame.image.load(img_path)
 
     def show(self):
         print("{} of {}".format(self.value.name, self.suit.value))
@@ -51,7 +56,7 @@ class Deck:
     def build(self):
         for suit in CardSuit:
             for val in CardValue:
-                self.cards.append(Card(suit, val))
+                self.cards.append(Card(suit, val, cards_path + '{}{}.png'.format(val.value, suit.value)))
 
     def shuffle(self):
         random.shuffle(self.cards)
@@ -89,7 +94,7 @@ class Player:
 
 class Game:
     def __init__(self):
-        self.players = [Player("Kamil"), Player("Computer")]
+        self.players = [Player("Zygrfryda"), Player("Computer")]
         self.deck = Deck()
         self.table = []
         self.deal()
@@ -115,19 +120,64 @@ class Game:
         print("On table: ")
         self.table[0].show()
 
+
+##########################
     def put_on_table(self):
+        for i in range(0, len(self.players[0].hand)):
+            print(i, ":", end =' ')
+            self.players[0].hand[i].show()     #self.players[0].show_hand()
+        cardToPutOnTable = input("Select: ")
+        cardToPutOnTable = int(cardToPutOnTable)
+        #add buttons on cards
+        self.table.append(self.players[0].hand.pop(cardToPutOnTable))
+
+        for card in self.table:
+            card.show()
+
+##################
+
+
+    # checks restrictions made by special cards and checks if card can be put on table
+    def can_put_on_table(self):
         pass
 
 
-    def can_put(self):
-        pass
+carddd = Card(CardValue.King, CardSuit.HEARTS, "/home/kamil/Code/Python/Makao/cards_resized/KH.png")
+print(str(carddd.suit.value)+str(carddd.value.value))
+
+# main function
+if __name__ == "__main__":
 
 
-#deck = Deck()
-#deck.show()
-#deck.wypisz()
+    # pygame initialization
+    pygame.init()
 
-makao = Game()
-print("On hand")
-makao.players[0].show_hand()
+    # create screen
+    screen_width, screen_height = 1024, 768
+    screen = pygame.display.set_mode((screen_width, screen_height))
+
+    # title
+    pygame.display.set_caption("Makao")
+
+
+    makao = Game()
+
+
+
+    running = True
+    while running:
+
+        # RGB color
+        # greenish background
+        screen.fill((3, 122, 48))
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+        pygame.display.update()
+
+
+    pygame.quit()
+
 
