@@ -1,4 +1,4 @@
-import pygame
+#import pygame
 import random
 from enum import Enum
 from enum import IntEnum
@@ -31,7 +31,7 @@ class CardSuit(Enum):
     HEARTS = 'Hearts'
     DIAMONDS = 'Diamonds'
 
-# create special cards set
+# special cards set
 specialCards = set()
 specialCardValues = [CardValue.Two, CardValue.Three, CardValue.Four, CardValue.Jack, CardValue.Ace]
 for card_suit in CardSuit:
@@ -58,6 +58,7 @@ class Card:
         if self.suit is other.suit or self.value is other.value:
             return True
         return False
+
 
 # deck info and methods
 class Deck:
@@ -98,13 +99,17 @@ class Player:
 
 class Game:
     def __init__(self):
-        self.players = [Player("Zygrfryda", 0), Player("Computer", 1)]
+        print("Makao!")
+        self.players = [Player("Kamil", 0), Player("Computer", 1)]
         self.deck = Deck()
         self.table = []
         self.deal()
 
     # gives player 5 cards and places 1 card on table
     def deal(self):
+        '''
+        Deals 5 cards to players
+        '''
         self.deck.shuffle()
         # add 5 cards to player's hand
         for card in range(5):
@@ -118,10 +123,20 @@ class Game:
             else:
                 self.deck.shuffle()
 
+
     def put_on_table(self):
+        '''
+        Puts card on table if player can do it; if not automatically draws card from deck
+        '''
         # show top of table
         print("Table: ", end = '')
         self.table[-1].show()
+
+        ########### - in progress
+        if self.table[-1].is_special():
+            print("SPECIAL!!!!!!")
+            self.check_restrictions()
+        ###########
 
         # show cards in hand to select
         for i in range(len(self.players[0].hand)):
@@ -151,27 +166,98 @@ class Game:
                 self.table.append(self.players[0].hand.pop(card_to_put_on_table))
 
 
-    # checks restrictions made by special cards and checks if card can be put on table
-    # one method should do one thing? -- for every special card different method? - different restrictions
+    # checks if card can be put on table
     def can_put_on_table(self, card):
+        '''
+        Checks if card can be put on table by game rules (same suit or value)
+        :param card: compares card with one on the table
+        :return: true if card can be put on table
+        '''
         if not self.players[0].hand[card].is_playable(self.table[-1]):
             print("Can't put this card on table")
             return False
         return True
 
+    # in progress
+    def check_restrictions(self):
+        card = self.table[-1]
+
+        # switch case to use restriction methods
+        restrictions = {
+            CardValue.Two: self.restriction_two,
+            CardValue.Three: self.restriction_three,
+            CardValue.Four: self.restriction_four,
+            CardValue.Jack: self.restriction_jack,
+            CardValue.King: self.restriction_king,
+            CardValue.Ace: self.restriction_ace
+        }
+
+        restriction = restrictions.get(card.value)
+        restriction()
+
+    # another class for restrictions ??
+    # restriction made by '2'
+    def restriction_two(self):
+        '''
+        Draw 2 cards
+        :return:
+        '''
+        print("TWO")
+
+    # restriction made by '3'
+    def restriction_three(self):
+        '''
+        Draw 3 cards
+        :return:
+        '''
+        print("THREE")
+
+    # restriction made by '4'
+    def restriction_four(self):
+        '''
+        Loose turn
+        :return:
+        '''
+        print("FOUR")
+
+    # restriction made by 'jack'
+    def restriction_jack(self):
+        '''
+        Can change figure to (5-10 or Queen)
+        :return:
+        '''
+        print("JACK")
+
+    # restriction made by 'king'
+    def restriction_king(self):
+        '''
+        Draw 5 cards
+        :return:
+        '''
+        print("KING")
+
+    # restriction made by 'ace'
+    def restriction_ace(self):
+        '''
+        Choose color
+        :return:
+        '''
+        print("ACE")
+
     # win condition - empty hand means player won
     def win_con(self, player_id):
         if not self.players[player_id].hand:
             print("You won")
-            exit(0)  # change game loop cond?
+            exit(0)  # change game loop condition
 
     # draw one card --> put in player's hand
     def draw_card(self, player_id):
         self.players[player_id].hand.append(self.deck.draw())
 
 
-if __name__ == "__main__":
 
+
+if __name__ == "__main__":
     makao = Game()
     while not makao.win_con(0):
         makao.put_on_table()
