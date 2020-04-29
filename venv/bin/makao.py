@@ -1,5 +1,6 @@
 #import pygame
 import random
+import time
 from enum import Enum
 from enum import IntEnum
 
@@ -87,23 +88,114 @@ class Deck:
 
 #player info
 class Player:
-    def __init__(self, name, id):
+    def __init__(self, name, game, player_id):
         self.hand = []
         self.name = name
-        self.id = id
+        self.game = game
+        self.player_id = player_id
+        self.stop = 0
 
     def show_hand(self):
+        for i in range(len(self.hand)):
+            print(i, ":", end=' ')
+            self.hand[i].show()
+        print(len(self.hand), ": Draw card")
+        print((len(self.hand) + 1), ": EXIT!")
+
+    def draw_card(self, quantity):
+        print("Draws", quantity, "cards")
+        for _ in range(quantity):
+            self.hand.append(self.game.deck.draw())
+
+    def put_on_table(self):
+        self.game.restriction.info()
+        card_to_put_on_table = input("Select: ")
+        card_to_put_on_table = int(card_to_put_on_table)
+
+        # option to draw card
+        if card_to_put_on_table is len(self.hand):
+            self.draw_card(1)
+            return None
+
+        # exit - temporary
+        elif card_to_put_on_table is len(self.hand) + 1:
+            print("Exit successful!")
+            exit(0)
+
+        card = self.hand[card_to_put_on_table]
+        restriction = self.game.restriction(card, self)
+        if restriction == -1:
+            return None
+        elif (not card.is_playable(self.game.current()) or restriction == False) and restriction != 2:
+            print("Can't put this card on table")
+            self.draw_card(1)
+            return None
+
+        return self.hand.pop(card_to_put_on_table)
+
+
+class Bot(Player):
+    def put_on_table(self):
+        layable = []
         for card in self.hand:
-            card.show()
+            restriction = self.game.restriction(card, self, True)
+            if restriction and card.is_playable(self.game.current()) or restriction == 2:
+                layable.append(card)
+
+        if len(layable):
+            card = random.choice(layable)
+            return self.hand.pop(self.hand.index(card))
+
+        else:
+            restriction = self.game.restriction(self.hand[0], self, False)
+            if restriction == -1:
+                return None
+            self.draw_card(1)
+            return None
+
+
+class Restriction:
+    active = False
+    def create(self, function, turns, information):
+        self.active = True
+        self.function = function
+        self.turns = turns
+        self.information = information
+
+    def disable(self):
+        self.active = False
+
+    def turn(self):
+        if self.active:
+            if self.turns == 0:
+                self.disable()
+            else:
+                self.turns -= 1
+
+    def info(self):
+        if self.active:
+            print(self.information)
+
+    def __call__(self, card, player, mock=False):
+        if self.active:
+            return self.function(card, player, mock)
+        else:
+            return True
 
 
 class Game:
     def __init__(self):
         print("Makao!")
-        self.players = [Player("Kamil", 0), Player("Computer", 1)]
+        self.players = [Bot("Computer", self, 0), Player("Kamil", self, 1)]
+        self.restriction = Restriction()
+        self.card_pending = 0
+        self.stops_pending = 0
         self.deck = Deck()
         self.table = []
         self.deal()
+
+    def current(self):
+        return self.table[-1]
 
     # gives player 5 cards and places 1 card on table
     def deal(self):
@@ -116,7 +208,7 @@ class Game:
             for player in self.players:
                 player.hand.append(self.deck.draw())
 
-        while not self.table:    # <------- condition to loop if first card was special
+        while not self.table:    # <-- condition to loop if first card was special
             # Checks if first card on table isn't special else shuffles deck
             if not self.deck.cards[-1].is_special():
                 self.table.append(self.deck.draw())
@@ -124,148 +216,218 @@ class Game:
                 self.deck.shuffle()
 
 
-    def put_on_table(self):
+    def turn(self, player_id):
         '''
         Puts card on table if player can do it; if not automatically draws card from deck
         '''
         # show top of table
         print("Table: ", end = '')
-        self.table[-1].show()
+        self.current().show()
+        player = self.players[player_id]
 
-        ########### - in progress
-        if self.table[-1].is_special():
-            print("SPECIAL!!!!!!")
-            self.check_restrictions()
-        ###########
+        if player.stop > 0:
+            print("Player #" + str(player.player_id) + " waits", player.stop, "turns")
+            player.stop -= 1
+            return
 
-        # show cards in hand to select
-        for i in range(len(self.players[0].hand)):
-            print(i, ":", end = ' ')
-            self.players[0].hand[i].show()
-        print(len(self.players[0].hand), ": Draw card")
+        self.restriction.turn()
 
-        how_many_cards_can_you_play = 0
-        # checks if you can put any card on table - if not automatically draws card
-        for card in self.players[0].hand:
-            if card.is_playable(self.table[-1]):
-                how_many_cards_can_you_play += 1
+        if player_id is not 0:
+            player.show_hand()
 
-        if how_many_cards_can_you_play is 0:
-            print("You couldn't put any card on table, Drawing card from deck...")
-            self.draw_card(0)
-        else:
-            print("Number of cards you can play:", how_many_cards_can_you_play)
-            card_to_put_on_table = input("Select: ")
-            card_to_put_on_table = int(card_to_put_on_table)
+        print("Player #" + str(player_id) + " turn")
+        print("Player #" + str(player_id) + " card count:", len(player.hand))
+        time.sleep(1)
+        card = player.put_on_table()
 
-            # option to draw card
-            if card_to_put_on_table is len(self.players[0].hand):
-                self.draw_card(0)
-            # check i card can be put on table
-            elif self.can_put_on_table(card_to_put_on_table):
-                self.table.append(self.players[0].hand.pop(card_to_put_on_table))
+        if card is not None:
+            print("Player #" + str(player_id) + " puts", card.value.name, "of", card.suit.name, "on table")
+            self.table.append(card)
+            self.make_restriction(player_id)
 
 
-    # checks if card can be put on table
-    def can_put_on_table(self, card):
-        '''
-        Checks if card can be put on table by game rules (same suit or value)
-        :param card: compares card with one on the table
-        :return: true if card can be put on table
-        '''
-        if not self.players[0].hand[card].is_playable(self.table[-1]):
-            print("Can't put this card on table")
-            return False
-        return True
+    def make_restriction(self, player_id):
+        card = self.current()
+        # jack
+        if card.value is CardValue.Jack:
+            if player_id is not 0:
+                print("4 - Don't change")
+                print("5 - Five")
+                print("6 - Six")
+                print("7 - Seven")
+                print("8 - Eight")
+                print("9 - Nine")
+                print("10 - Ten")
+                print("11 - Queen")
+                value = input("Change value:")
+                value = int(value)
+                if value is 4:
+                    value = None
+                elif value is 5:
+                    value = CardValue.Five
+                elif value is 6:
+                    value = CardValue.Six
+                elif value is 7:
+                    value = CardValue.Seven
+                elif value is 8:
+                    value = CardValue.Eight
+                elif value is 9:
+                    value = CardValue.Nine
+                elif value is 10:
+                    value = CardValue.Ten
+                elif value is 11:
+                    value = CardValue.Queen
+                else:
+                    exit(1)
+            else:
+                value = CardValue.Six
 
-    # in progress
-    def check_restrictions(self):
-        card = self.table[-1]
+            print("Player $", player_id, "chose", value)
 
-        # switch case to use restriction methods
-        restrictions = {
-            CardValue.Two: self.restriction_two,
-            CardValue.Three: self.restriction_three,
-            CardValue.Four: self.restriction_four,
-            CardValue.Jack: self.restriction_jack,
-            CardValue.King: self.restriction_king,
-            CardValue.Ace: self.restriction_ace
-        }
+            # only chosen value or jack
+            def jack_restriction(changed, player, mock=False):
+                if changed.value is value or changed.value is CardValue.Jack:
+                    return 2
+                else:
+                    return False
+            self.restriction.create(jack_restriction, 2, "You can put only jack or " + str(value))
+            return
 
-        restriction = restrictions.get(card.value)
-        restriction()
+        # ace
+        if card.value is CardValue.Ace:
+            if player_id is not 0:
+                print("0 - Spades")
+                print("1 - Hearts")
+                print("2 - Clubs")
+                print("3 - Diamonds")
+                suit = input("Choose color: ")
+                suit = int(suit)
+                if suit is 0:
+                    suit = CardSuit.SPADES
+                elif suit is 1:
+                    suit = CardSuit.HEARTS
+                elif suit is 2:
+                    suit = CardSuit.CLUBS
+                elif suit is 3:
+                    suit = CardSuit.DIAMONDS
+                else:
+                    exit(1)
+            else:
+                suit = CardSuit.SPADES
+            print("Player #", player_id, "chose", suit)
 
-    # another class for restrictions ??
-    # restriction made by '2'
-    def restriction_two(self):
-        '''
-        Draw 2 cards
-        :return:
-        '''
-        print("TWO")
+            def ace_restriction(changed, player, mock=False):
+                if changed.suit is suit or changed.value is CardValue.Ace:
+                    return 2
+                else:
+                    return False
 
-    # restriction made by '3'
-    def restriction_three(self):
-        '''
-        Draw 3 cards
-        :return:
-        '''
-        print("THREE")
+            self.restriction.create(ace_restriction, 1, 'You can put only Ace or ' + str(suit))
+            return
 
-    # restriction made by '4'
-    def restriction_four(self):
-        '''
-        Loose turn
-        :return:
-        '''
-        print("FOUR")
+        # two
+        if card.value is CardValue.Two:
+            self.card_pending += 2
+            print("outside two_restriction", type(card))
+            # can put only two or three in the same color; else draws two cards
+            def two_restriction(changed, player, mock=False):
+                print("inside two_restriction", type(card))
+                if card.suit is CardSuit.SPADES or card.suit is CardSuit.HEARTS:
+                    if changed.value is CardValue.King and changed.suit is card.suit or (changed.value is CardValue.Two) or (changed.value is CardValue.Three and changed.suit is card.suit):
+                        return True
+                if (changed.value is CardValue.Two) or (changed.value is CardValue.Three and changed.suit is card.suit):
+                    return True
+                elif not mock:
+                    print("CARDS to draw " + str(self.card_pending))
+                    player.draw_card(self.card_pending)
+                    self.card_pending = 0
+                    return -1
+                else:
+                    return False
+            self.restriction.create(two_restriction, 1, "You can put only 2 or 3 or special King")
+            return
 
-    # restriction made by 'jack'
-    def restriction_jack(self):
-        '''
-        Can change figure to (5-10 or Queen)
-        :return:
-        '''
-        print("JACK")
+        # three
+        if card.value is CardValue.Three:
+            self.card_pending += 3
+            print("outside three_restriction", type(card))
+            # can put only three or two in the same color; else draws three cards
+            def three_restriction(changed, player, mock=False):
+                print("inside three_restriction", type(card))
+                if card.suit is CardSuit.SPADES or card.suit is CardSuit.HEARTS:
+                    if changed.value is CardValue.King and changed.suit is card.suit:
+                        return True
+                if (changed.value is CardValue.Three) or (changed.value is CardValue.Two and changed.suit is card.suit):
+                    return True
+                elif not mock:
+                    print("CARDS to draw " + str(self.card_pending))
+                    player.draw_card(self.card_pending)
+                    self.card_pending = 0
+                    return -1
+                else:
+                    return False
+            self.restriction.create(three_restriction, 1, "You can put only 2 or 3 or special King")
+            return
 
-    # restriction made by 'king'
-    def restriction_king(self):
-        '''
-        Draw 5 cards
-        :return:
-        '''
-        print("KING")
+        # king
+        if card.value is CardValue.King and (card.suit is CardSuit.SPADES or card.suit is CardSuit.HEARTS):
+            self.card_pending += 5
+            print("outside king_restriction", type(card))
+            def king_restriction(changed, player, mock=False):
+                print("Inside king_restriction", type(card))
+                if card.suit is CardSuit.HEARTS:
+                    if (changed.value is CardValue.King and changed.suit is CardSuit.SPADES) or ((changed.value is CardValue.Two or changed.value is CardValue.Three) and changed.suit is CardSuit.HEARTS):
+                        return True
+                    elif not mock:
+                            print("CARDS to draw " + str(self.card_pending))
+                            player.draw_card(self.card_pending)
+                            self.card_pending = 0
+                            return -1
+                    else:
+                        return False
+                else:
+                    if (changed.value is CardValue.King and changed.suit is CardSuit.HEARTS) or ((changed.value is CardValue.Two or changed.value is CardValue.Three) and changed.suit is CardSuit.SPADES):
+                        return True
+                    elif not mock:
+                        print("CARDS to draw " + str(self.card_pending))
+                        player.draw_card(self.card_pending)
+                        self.card_pending = 0
+                        return -1
+                    else:
+                        return False
+            self.restriction.create(king_restriction, 1, "You can put only 2 or 3 or special King")
+            return
 
-    # restriction made by 'ace'
-    def restriction_ace(self):
-        '''
-        Choose color
-        :return:
-        '''
-        print("ACE")
+        #four
+        if card.value is CardValue.Four:
+            self.stops_pending += 1
+            def four_restriction(changed, player, mock=False):
+                if changed.value is CardValue.Four:
+                    return True
+                elif not mock:
+                    player.stop += self.stops_pending
+                    self.stops_pending = 0
+                    return -1
+                else:
+                    return False
+
+            self.restriction.create(four_restriction, 1, "You can put only 4")
+            # print("Player #1 waits", self.stops_pending, "turns") if player_id is 0 else print("Player #0 waits", self.stops_pending, "turns")
+            return
 
     # win condition - empty hand means player won
     def win_con(self, player_id):
         if not self.players[player_id].hand:
-            print("You won")
+            print("Player $" + str(player_id) + "won")
             exit(0)  # change game loop condition
-
-    # draw one card --> put in player's hand
-    def draw_card(self, player_id):
-        self.players[player_id].hand.append(self.deck.draw())
-
-
 
 
 if __name__ == "__main__":
     makao = Game()
-    while not makao.win_con(0):
-        makao.put_on_table()
+    while not makao.win_con(0) or not makao.win_con(1):
+        makao.turn(0)
+        makao.turn(1)
 
-
-# main function
-# if __name__ == "__main__":
-#
 #     # pygame initialization
 #     pygame.init()
 #
