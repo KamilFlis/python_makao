@@ -105,7 +105,17 @@ class Player:
     def draw_card(self, quantity):
         print("Draws", quantity, "cards")
         for _ in range(quantity):
-            self.hand.append(self.game.deck.draw())
+            if self.game.deck.count():
+                self.hand.append(self.game.deck.draw())
+            else:
+                print("Empty deck, shuffling cards...")
+                time.sleep(3)
+                self.game.deck.cards = [card for card in self.game.table]
+                self.game.table.clear()
+                self.game.table.append(self.game.deck.cards.pop())
+                self.game.deck.shuffle()
+                self.hand.append(self.game.deck.draw())
+
 
     def put_on_table(self):
         self.game.restriction.info()
@@ -221,6 +231,8 @@ class Game:
         Puts card on table if player can do it; if not automatically draws card from deck
         '''
         # show top of table
+        print("Cards in deck: " + str(self.deck.count()))
+        print("Cards on table: " + str(len(self.table)))
         print("Table: ", end = '')
         self.current().show()
         player = self.players[player_id]
