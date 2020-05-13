@@ -3,6 +3,7 @@ import random
 import time
 from enum import Enum
 from enum import IntEnum
+from collections import Counter
 
 # # path to card images
 # cards_path = '/home/kamil/Code/Python/Makao/cards_resized_renamed/'
@@ -314,16 +315,27 @@ class Game:
                 else:
                     exit(1)
             else:
-                value = CardValue.Six
+                c = Counter(card.value for card in self.players[player_id].hand if not card.is_special())
+                print(c)
+                value = c.most_common(1)
+                value = value[0][0]
+                if not len(c):
+                    value = None
 
             print("Player $", player_id, "chose", value)
 
             # only chosen value or jack
             def jack_restriction(changed, player, mock=False):
+                if value is None:
+                    # don't change
+                    return changed.is_playable(self.current())
                 if changed.value is value or changed.value is CardValue.Jack:
                     return 2
                 else:
                     return False
+
+            if value is None:
+                value = 'whatever'
             self.restriction.create(jack_restriction, 2, "You can put only jack or " + str(value))
             return
 
@@ -347,7 +359,12 @@ class Game:
                 else:
                     exit(1)
             else:
-                suit = CardSuit.SPADES
+                c = Counter(card.suit for card in self.players[player_id].hand)
+                print(c)
+                suit = c.most_common(1)
+                suit = suit[0][0]
+                print(suit)
+
             print("Player #", player_id, "chose", suit)
 
             def ace_restriction(changed, player, mock=False):
