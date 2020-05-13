@@ -48,8 +48,8 @@ class Card:
         self.suit = suit
         self.value = value
 
-    def show(self):
-        print("{} of {}".format(self.value.name, self.suit.value))
+    def __str__(self):
+        return "{} of {}".format(self.value.name, self.suit.value)
 
     def is_special(self):
         return specialCards.__contains__((self.value.value, self.suit.value))
@@ -77,7 +77,8 @@ class Deck:
 
     def show(self):
         for c in self.cards:
-            c.show()
+            print(c)
+            #c.show()
 
     def draw(self):
         return self.cards.pop()
@@ -98,7 +99,7 @@ class Player:
     def show_hand(self):
         for i in range(len(self.hand)):
             print(i, ":", end=' ')
-            self.hand[i].show()
+            print(self.hand[i])
         print(len(self.hand), ": Draw card")
         print((len(self.hand) + 1), ": EXIT!")
 
@@ -116,23 +117,32 @@ class Player:
                 self.game.deck.shuffle()
                 self.hand.append(self.game.deck.draw())
 
-
     def put_on_table(self):
         self.game.restriction.info()
-        card_to_put_on_table = input("Select: ")
-        card_to_put_on_table = int(card_to_put_on_table)
+        # card_to_put_on_table = input("Select: ")
+        # card_to_put_on_table = int(card_to_put_on_table)
+        card_to_put_on_table = list(map(int, input("Select: ").split()))
 
         # option to draw card
-        if card_to_put_on_table is len(self.hand):
+        if card_to_put_on_table[0] is len(self.hand):
             self.draw_card(1)
             return None
 
         # exit - temporary
-        elif card_to_put_on_table is len(self.hand) + 1:
+        elif card_to_put_on_table[0] is len(self.hand) + 1:
             print("Exit successful!")
             exit(0)
 
-        card = self.hand[card_to_put_on_table]
+        for card_index in card_to_put_on_table:
+            if self.hand[card_to_put_on_table[0]].value != self.hand[card_index].value:
+                print("Can't put this card on table")
+                self.draw_card(1)
+                return None
+
+        cards = [self.hand[index] for index in card_to_put_on_table]
+
+        card = cards[0]
+        # card = self.hand[card_to_put_on_table]
         restriction = self.game.restriction(card, self)
         if restriction == -1:
             return None
@@ -141,7 +151,11 @@ class Player:
             self.draw_card(1)
             return None
 
-        return self.hand.pop(card_to_put_on_table)
+
+        self.hand = [_ for _ in self.hand if _ not in cards]
+        return cards
+
+        # return self.hand.pop(card_to_put_on_table)
 
 
 class Bot(Player):
@@ -150,11 +164,18 @@ class Bot(Player):
         for card in self.hand:
             restriction = self.game.restriction(card, self, True)
             if restriction and card.is_playable(self.game.current()) or restriction == 2:
-                layable.append(card)
+                layable.append([card])
 
         if len(layable):
+            for card in layable:
+                for card_in_hand in self.hand:
+                    if card_in_hand != card[0] and card_in_hand.value == card[0].value:
+                        card.append(card_in_hand)
+
             card = random.choice(layable)
-            return self.hand.pop(self.hand.index(card))
+            self.hand = [_ for _ in self.hand if _ not in card]
+
+            return card
 
         else:
             restriction = self.game.restriction(self.hand[0], self, False)
@@ -234,7 +255,7 @@ class Game:
         print("Cards in deck: " + str(self.deck.count()))
         print("Cards on table: " + str(len(self.table)))
         print("Table: ", end = '')
-        self.current().show()
+        print(self.current())
         player = self.players[player_id]
 
         if player.stop > 0:
@@ -250,12 +271,13 @@ class Game:
         print("Player #" + str(player_id) + " turn")
         print("Player #" + str(player_id) + " card count:", len(player.hand))
         time.sleep(1)
-        card = player.put_on_table()
+        cards = player.put_on_table()
 
-        if card is not None:
-            print("Player #" + str(player_id) + " puts", card.value.name, "of", card.suit.name, "on table")
-            self.table.append(card)
-            self.make_restriction(player_id)
+        if cards is not None:
+            for card in cards:
+                print("Player #" + str(player_id) + " puts", card.value.name, "of", card.suit.name, "on table")
+                self.table.append(card)
+                self.make_restriction(player_id)
 
 
     def make_restriction(self, player_id):
