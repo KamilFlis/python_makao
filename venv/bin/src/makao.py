@@ -1,31 +1,28 @@
-#import pygame
+import pygame
 import random
 import time
 from enum import Enum
 from enum import IntEnum
 from collections import Counter
+from properties import CARDS_PATH
 
-# # path to card images
-# cards_path = '/home/kamil/Code/Python/Makao/cards_resized_renamed/'
-#
-# # screen resolution
-# screen_width, screen_height = 1024, 768
+
 
 # card values - name + value
 class CardValue(IntEnum):
-    Two = 2
-    Three = 3
-    Four = 4
-    Five = 5
-    Six = 6
-    Seven = 7
-    Eight = 8
-    Nine = 9
-    Ten = 10
-    Jack = 11
-    Queen = 12
-    King = 13
-    Ace = 14
+    TWO = 2
+    THREE = 3
+    FOUR = 4
+    FIVE = 5
+    SIX = 6
+    SEVEN = 7
+    EIGHT = 8
+    NINE = 9
+    TEN = 10
+    JACK = 11
+    QUEEN = 12
+    KING = 13
+    ACE = 14
 
 class CardSuit(Enum):
     SPADES = 'Spades'
@@ -34,36 +31,40 @@ class CardSuit(Enum):
     DIAMONDS = 'Diamonds'
 
 # special cards set
-specialCards = set()
-specialCardValues = [CardValue.Two, CardValue.Three, CardValue.Four, CardValue.Jack, CardValue.Ace]
+SPECIAL_CARDS = set()
+specialCardValues = [CardValue.TWO, CardValue.THREE, CardValue.FOUR, CardValue.JACK, CardValue.ACE]
 for card_suit in CardSuit:
      for card_val in specialCardValues:
-         specialCards.add((card_val.value, card_suit.value))
+         SPECIAL_CARDS.add((card_val, card_suit))
 
-specialCards.add((CardValue.King.value, CardSuit.SPADES.value))
-specialCards.add((CardValue.King.value, CardSuit.HEARTS.value))
+SPECIAL_CARDS.add((CardValue.KING, CardSuit.SPADES))
+SPECIAL_CARDS.add((CardValue.KING, CardSuit.HEARTS))
+SPECIAL_CARDS = frozenset(SPECIAL_CARDS)
 
 # card info
 class Card:
-    def __init__(self, suit, value):
+
+    def __init__(self, suit, value, image):
         self.suit = suit
         self.value = value
+        self.image = image
 
     def __str__(self):
         return "{} of {}".format(self.value.name, self.suit.value)
 
     def is_special(self):
-        return specialCards.__contains__((self.value.value, self.suit.value))
+        return SPECIAL_CARDS.__contains__((self.value, self.suit))
 
     # check if card can be put on table (same color or value)
     def is_playable(self, other):
-        if self.suit is other.suit or self.value is other.value:
+        if self.suit == other.suit or self.value == other.value:
             return True
         return False
 
 
 # deck info and methods
 class Deck:
+
     def __init__(self):
         self.cards = []
         self.build()
@@ -71,7 +72,7 @@ class Deck:
     def build(self):
         for suit in CardSuit:
             for val in CardValue:
-                self.cards.append(Card(suit, val))
+                self.cards.append(Card(suit, val, pygame.image.load(CARDS_PATH + str(val.value) + str(suit.value) + '.png')))
 
     def shuffle(self):
         random.shuffle(self.cards)
@@ -79,7 +80,6 @@ class Deck:
     def show(self):
         for c in self.cards:
             print(c)
-            #c.show()
 
     def draw(self):
         return self.cards.pop()
@@ -88,8 +88,9 @@ class Deck:
         return len(self.cards)
 
 
-#player info
+# player info
 class Player:
+
     def __init__(self, name, game, player_id):
         self.hand = []
         self.name = name
@@ -99,7 +100,7 @@ class Player:
 
     def show_hand(self):
         for i in range(len(self.hand)):
-            print(i, ":", end=' ')
+            print(str(i) + ":", end=' ')
             print(self.hand[i])
         print(len(self.hand), ": Draw card")
         print((len(self.hand) + 1), ": EXIT!")
@@ -119,16 +120,17 @@ class Player:
                 self.hand.append(self.game.deck.draw())
 
     def put_on_table(self):
+        #card_to_put_on_table = [card_to_put_on_table]
         self.game.restriction.info()
         card_to_put_on_table = list(map(int, input("Select: ").split()))
 
         # option to draw card
-        if card_to_put_on_table[0] is len(self.hand):
+        if card_to_put_on_table[0] == len(self.hand):
             self.draw_card(1)
             return None
 
         # exit - temporary
-        elif card_to_put_on_table[0] is len(self.hand) + 1:
+        elif card_to_put_on_table[0] == len(self.hand) + 1:
             print("Exit successful!")
             exit(0)
 
@@ -141,13 +143,12 @@ class Player:
         cards = [self.hand[index] for index in card_to_put_on_table]
 
         card = cards[0]
-        # card = self.hand[card_to_put_on_table]
         restriction = self.game.restriction(card, self)
         if restriction == -1:
             return None
         elif (not card.is_playable(self.game.current()) or restriction == False) and restriction != 2:
             print("Can't put this card on table")
-            self.draw_card(1)
+          #  self.draw_card(1)
             return None
 
         self.hand = [_ for _ in self.hand if _ not in cards]
@@ -184,6 +185,7 @@ class Bot(Player):
 
 
 class Restriction:
+
     active = False
     def create(self, function, turns, information):
         self.active = True
@@ -213,6 +215,7 @@ class Restriction:
 
 
 class Game:
+
     def __init__(self):
         print("Makao!")
         self.players = [Bot("Computer", self, 0), Player("Kamil", self, 1)]
@@ -228,9 +231,9 @@ class Game:
 
     # gives player 5 cards and places 1 card on table
     def deal(self):
-        '''
-        Deals 5 cards to players
-        '''
+        """
+        Deals 5 cards to players.
+        """
         self.deck.shuffle()
         # add 5 cards to player's hand
         for card in range(5):
@@ -244,11 +247,196 @@ class Game:
             else:
                 self.deck.shuffle()
 
+    def two(self, player_id):
+        card = self.current()
+        self.card_pending += 2
+        # can put only two or three in the same color; else draws two cards
+        def two_restriction(changed, player, mock=False):
+            if card.suit == CardSuit.SPADES or card.suit == CardSuit.HEARTS:
+                if changed.value == CardValue.KING and changed.suit == card.suit or (changed.value == CardValue.TWO) or (changed.value == CardValue.THREE and changed.suit == card.suit):
+                    return True
+            if (changed.value == CardValue.TWO) or (changed.value == CardValue.THREE and changed.suit == card.suit):
+                return True
+            elif not mock:
+                print("Cards to draw " + str(self.card_pending))
+                player.draw_card(self.card_pending)
+                self.card_pending = 0
+                return -1
+            else:
+                return False
+
+        self.restriction.create(two_restriction, 1, "You can put only 2 or 3 or special King")
+
+    def three(self, player_id):
+        card = self.current()
+        self.card_pending += 3
+        # can put only three or two in the same color; else draws three cards
+        def three_restriction(changed, player, mock=False):
+            if card.suit == CardSuit.SPADES or card.suit == CardSuit.HEARTS:
+                if changed.value == CardValue.KING and changed.suit == card.suit:
+                    return True
+            if (changed.value == CardValue.THREE) or (changed.value == CardValue.TWO and changed.suit == card.suit):
+                return True
+            elif not mock:
+                print("Cards to draw " + str(self.card_pending))
+                player.draw_card(self.card_pending)
+                self.card_pending = 0
+                return -1
+            else:
+                return False
+
+        self.restriction.create(three_restriction, 1, "You can put only 2 or 3 or special King")
+
+    def four(self, player_id):
+        self.stops_pending += 1
+
+        def four_restriction(changed, player, mock=False):
+            if changed.value == CardValue.FOUR:
+                return True
+            elif not mock:
+                player.stop += self.stops_pending
+                self.stops_pending = 0
+                return -1
+            else:
+                return False
+
+        self.restriction.create(four_restriction, 1, "You can put only 4")
+
+    def jack(self, player_id):
+        if player_id != 0:
+            print("4 - Don't change")
+            print("5 - Five")
+            print("6 - Six")
+            print("7 - Seven")
+            print("8 - Eight")
+            print("9 - Nine")
+            print("10 - Ten")
+            print("11 - Queen")
+            value = input("Change value:")
+            value = int(value)
+            values = {
+                4: None,
+                5: CardValue.FIVE,
+                6: CardValue.SIX,
+                7: CardValue.SEVEN,
+                8: CardValue.EIGHT,
+                9: CardValue.NINE,
+                10: CardValue.TEN,
+                11: CardValue.QUEEN
+            }
+
+            value = values.get(value, lambda: exit(1))
+
+        else:
+            c = Counter(card.value for card in self.players[player_id].hand if not card.is_special())
+            if not len(c):
+                value = None
+            else:
+                value = c.most_common(1)
+                value = value[0][0]
+
+        print("Player #" + str(player_id) + " chose", value)
+
+        # only chosen value or jack
+        def jack_restriction(changed, player, mock=False):
+            if value is None:
+                # don't change
+                return changed.is_playable(card)
+            if changed.value == value or changed.value == CardValue.JACK:
+                return 2
+            else:
+                return False
+
+        if value is None:
+            value = 'whatever'
+
+        self.restriction.create(jack_restriction, 2, "You can put only jack or " + str(value))
+
+    def king(self, player_id):
+        card = self.current()
+        self.card_pending += 5
+        def king_restriction(changed, player, mock=False):
+            if card.suit == CardSuit.HEARTS:
+                if (changed.value == CardValue.KING and changed.suit == CardSuit.SPADES) or ((changed.value == CardValue.TWO or changed.value == CardValue.THREE) and changed.suit == CardSuit.HEARTS):
+                    return True
+                elif not mock:
+                    print("Cards to draw " + str(self.card_pending))
+                    player.draw_card(self.card_pending)
+                    self.card_pending = 0
+                    return -1
+                else:
+                    return False
+            else:
+                if (changed.value == CardValue.KING and changed.suit == CardSuit.HEARTS) or ((changed.value == CardValue.TWO or changed.value == CardValue.THREE) and changed.suit == CardSuit.SPADES):
+                    return True
+                elif not mock:
+                    print("Cards to draw " + str(self.card_pending))
+                    player.draw_card(self.card_pending)
+                    self.card_pending = 0
+                    return -1
+                else:
+                    return False
+
+        self.restriction.create(king_restriction, 1, "You can put only 2 or 3 or special King")
+
+    def ace(self, player_id):
+        if player_id != 0:
+            print("0 - Spades")
+            print("1 - Hearts")
+            print("2 - Clubs")
+            print("3 - Diamonds")
+            suit = input("Choose color: ")
+            suit = int(suit)
+            suits = {
+                0: CardSuit.SPADES,
+                1: CardSuit.HEARTS,
+                2: CardSuit.CLUBS,
+                3: CardSuit.DIAMONDS
+            }
+
+            suit = suits.get(suit, lambda: exit(1))
+
+        else:
+            c = Counter(card.suit for card in self.players[player_id].hand)
+            print(c)
+            suit = c.most_common(1)
+            suit = suit[0][0]
+            print(suit)
+
+        print("Player #" + str(player_id) + " chose", suit)
+
+        def ace_restriction(changed, player, mock=False):
+            if changed.suit == suit or changed.value == CardValue.ACE:
+                return 2
+            else:
+                return False
+
+        self.restriction.create(ace_restriction, 1, 'You can put only Ace or ' + str(suit))
+
+    def make_restriction(self, player_id):
+        card = self.current()
+        if card.is_special():
+            restriction = {
+                CardValue.TWO: self.two,
+                CardValue.THREE: self.three,
+                CardValue.FOUR: self.four,
+                CardValue.JACK: self.jack,
+                CardValue.KING: self.king,
+                CardValue.ACE: self.ace
+            }
+
+            func = restriction.get(card.value)
+            func(player_id)
+
+    # win condition - empty hand means player won
+    def win_con(self, player_id):
+        return False if len(self.players[player_id].hand) == 0 else True
+
 
     def turn(self, player_id):
-        '''
-        Puts card on table if player can do it; if not automatically draws card from deck
-        '''
+        """
+        Puts card on table if player can do it; if not automatically draws card from deck.
+        """
         # show top of table
         print("Cards in deck: " + str(self.deck.count()))
         print("Cards on table: " + str(len(self.table)))
@@ -263,7 +451,7 @@ class Game:
 
         self.restriction.turn()
 
-        if player_id is not 0:
+        if player_id != 0:
             player.show_hand()
 
         print("Player #" + str(player_id) + " turn")
@@ -273,198 +461,9 @@ class Game:
 
         if cards is not None:
             for card in cards:
-                print("Player #" + str(player_id) + " puts", card.value.name, "of", card.suit.name, "on table")
+                print("Player #" + str(player_id) + " puts", card, "on table")
                 self.table.append(card)
                 self.make_restriction(player_id)
-
-
-    def make_restriction(self, player_id):
-        card = self.current()
-        # jack
-        if card.value is CardValue.Jack:
-            if player_id is not 0:
-                print("4 - Don't change")
-                print("5 - Five")
-                print("6 - Six")
-                print("7 - Seven")
-                print("8 - Eight")
-                print("9 - Nine")
-                print("10 - Ten")
-                print("11 - Queen")
-                value = input("Change value:")
-                value = int(value)
-                if value is 4:
-                    value = None
-                elif value is 5:
-                    value = CardValue.Five
-                elif value is 6:
-                    value = CardValue.Six
-                elif value is 7:
-                    value = CardValue.Seven
-                elif value is 8:
-                    value = CardValue.Eight
-                elif value is 9:
-                    value = CardValue.Nine
-                elif value is 10:
-                    value = CardValue.Ten
-                elif value is 11:
-                    value = CardValue.Queen
-                else:
-                    exit(1)
-            else:
-                c = Counter(card.value for card in self.players[player_id].hand if not card.is_special())
-                if not len(c):
-                    value = None
-                else:
-                    value = c.most_common(1)
-                    value = value[0][0]
-
-
-            print("Player #" + str(player_id) + " chose", value)
-
-            # only chosen value or jack
-            def jack_restriction(changed, player, mock=False):
-                if value is None:
-                    # don't change
-                    return changed.is_playable(card)
-                if changed.value is value or changed.value is CardValue.Jack:
-                    return 2
-                else:
-                    return False
-
-            if value is None:
-                value = 'whatever'
-
-            self.restriction.create(jack_restriction, 2, "You can put only jack or " + str(value))
-            return
-
-        # ace
-        if card.value is CardValue.Ace:
-            if player_id is not 0:
-                print("0 - Spades")
-                print("1 - Hearts")
-                print("2 - Clubs")
-                print("3 - Diamonds")
-                suit = input("Choose color: ")
-                suit = int(suit)
-                if suit is 0:
-                    suit = CardSuit.SPADES
-                elif suit is 1:
-                    suit = CardSuit.HEARTS
-                elif suit is 2:
-                    suit = CardSuit.CLUBS
-                elif suit is 3:
-                    suit = CardSuit.DIAMONDS
-                else:
-                    exit(1)
-            else:
-                c = Counter(card.suit for card in self.players[player_id].hand)
-                print(c)
-                suit = c.most_common(1)
-                suit = suit[0][0]
-                print(suit)
-
-            print("Player #" + str(player_id) + " chose", suit)
-
-            def ace_restriction(changed, player, mock=False):
-                if changed.suit is suit or changed.value is CardValue.Ace:
-                    return 2
-                else:
-                    return False
-
-            self.restriction.create(ace_restriction, 1, 'You can put only Ace or ' + str(suit))
-            return
-
-        # two
-        if card.value is CardValue.Two:
-            self.card_pending += 2
-            # can put only two or three in the same color; else draws two cards
-            def two_restriction(changed, player, mock=False):
-                if card.suit is CardSuit.SPADES or card.suit is CardSuit.HEARTS:
-                    if changed.value is CardValue.King and changed.suit is card.suit or (changed.value is CardValue.Two) or (changed.value is CardValue.Three and changed.suit is card.suit):
-                        return True
-                if (changed.value is CardValue.Two) or (changed.value is CardValue.Three and changed.suit is card.suit):
-                    return True
-                elif not mock:
-                    print("Cards to draw " + str(self.card_pending))
-                    player.draw_card(self.card_pending)
-                    self.card_pending = 0
-                    return -1
-                else:
-                    return False
-
-            self.restriction.create(two_restriction, 1, "You can put only 2 or 3 or special King")
-            return
-
-        # three
-        if card.value is CardValue.Three:
-            self.card_pending += 3
-            # can put only three or two in the same color; else draws three cards
-            def three_restriction(changed, player, mock=False):
-                if card.suit is CardSuit.SPADES or card.suit is CardSuit.HEARTS:
-                    if changed.value is CardValue.King and changed.suit is card.suit:
-                        return True
-                if (changed.value is CardValue.Three) or (changed.value is CardValue.Two and changed.suit is card.suit):
-                    return True
-                elif not mock:
-                    print("Cards to draw " + str(self.card_pending))
-                    player.draw_card(self.card_pending)
-                    self.card_pending = 0
-                    return -1
-                else:
-                    return False
-
-            self.restriction.create(three_restriction, 1, "You can put only 2 or 3 or special King")
-            return
-
-        # king
-        if card.value is CardValue.King and (card.suit is CardSuit.SPADES or card.suit is CardSuit.HEARTS):
-            self.card_pending += 5
-            def king_restriction(changed, player, mock=False):
-                if card.suit is CardSuit.HEARTS:
-                    if (changed.value is CardValue.King and changed.suit is CardSuit.SPADES) or ((changed.value is CardValue.Two or changed.value is CardValue.Three) and changed.suit is CardSuit.HEARTS):
-                        return True
-                    elif not mock:
-                            print("Cards to draw " + str(self.card_pending))
-                            player.draw_card(self.card_pending)
-                            self.card_pending = 0
-                            return -1
-                    else:
-                        return False
-                else:
-                    if (changed.value is CardValue.King and changed.suit is CardSuit.HEARTS) or ((changed.value is CardValue.Two or changed.value is CardValue.Three) and changed.suit is CardSuit.SPADES):
-                        return True
-                    elif not mock:
-                        print("Cards to draw " + str(self.card_pending))
-                        player.draw_card(self.card_pending)
-                        self.card_pending = 0
-                        return -1
-                    else:
-                        return False
-
-            self.restriction.create(king_restriction, 1, "You can put only 2 or 3 or special King")
-            return
-
-        # four
-        if card.value is CardValue.Four:
-            self.stops_pending += 1
-            def four_restriction(changed, player, mock=False):
-                if changed.value is CardValue.Four:
-                    return True
-                elif not mock:
-                    player.stop += self.stops_pending
-                    self.stops_pending = 0
-                    return -1
-                else:
-                    return False
-
-            self.restriction.create(four_restriction, 1, "You can put only 4")
-            # print("Player #1 waits", self.stops_pending, "turns") if player_id is 0 else print("Player #0 waits", self.stops_pending, "turns")
-            return
-
-    # win condition - empty hand means player won
-    def win_con(self, player_id):
-        return False if len(self.players[player_id].hand) is 0 else True
 
 
 if __name__ == "__main__":
