@@ -91,10 +91,9 @@ class Deck:
 # player info
 class Player:
 
-    def __init__(self, name, game, player_id):
+    def __init__(self, name, player_id):
         self.hand = []
         self.name = name
-        self.game = game
         self.player_id = player_id
         self.stop = 0
 
@@ -104,84 +103,6 @@ class Player:
             print(self.hand[i])
         print(len(self.hand), ": Draw card")
         print((len(self.hand) + 1), ": EXIT!")
-
-    def draw_card(self, quantity):
-        print("Draws", quantity, "cards")
-        for _ in range(quantity):
-            if self.game.deck.count():
-                self.hand.append(self.game.deck.draw())
-            else:
-                print("Empty deck, shuffling cards...")
-                time.sleep(3)
-                self.game.deck.cards = [card for card in self.game.table]
-                self.game.table.clear()
-                self.game.table.append(self.game.deck.cards.pop())
-                self.game.deck.shuffle()
-                self.hand.append(self.game.deck.draw())
-
-    def put_on_table(self):
-        #card_to_put_on_table = [card_to_put_on_table]
-        self.game.restriction.info()
-        card_to_put_on_table = list(map(int, input("Select: ").split()))
-
-        # option to draw card
-        if card_to_put_on_table[0] == len(self.hand):
-            self.draw_card(1)
-            return None
-
-        # exit - temporary
-        elif card_to_put_on_table[0] == len(self.hand) + 1:
-            print("Exit successful!")
-            exit(0)
-
-        for card_index in card_to_put_on_table:
-            if self.hand[card_to_put_on_table[0]].value != self.hand[card_index].value:
-                print("Can't put this card on table")
-                self.draw_card(1)
-                return None
-
-        cards = [self.hand[index] for index in card_to_put_on_table]
-
-        card = cards[0]
-        restriction = self.game.restriction(card, self)
-        if restriction == -1:
-            return None
-        elif (not card.is_playable(self.game.current()) or restriction == False) and restriction != 2:
-            print("Can't put this card on table")
-          #  self.draw_card(1)
-            return None
-
-        self.hand = [_ for _ in self.hand if _ not in cards]
-        return cards
-
-
-class Bot(Player):
-
-    # no AI, just playing random cards for now
-    def put_on_table(self):
-        layable = []
-        for card in self.hand:
-            restriction = self.game.restriction(card, self, True)
-            if restriction and card.is_playable(self.game.current()) or restriction == 2:
-                layable.append([card])
-
-        if len(layable):
-            for card in layable:
-                for card_in_hand in self.hand:
-                    if card_in_hand != card[0] and card_in_hand.value == card[0].value:
-                        card.append(card_in_hand)
-
-            card = random.choice(layable)
-            self.hand = [_ for _ in self.hand if _ not in card]
-
-            return card
-
-        else:
-            restriction = self.game.restriction(self.hand[0], self, False)
-            if restriction == -1:
-                return None
-            self.draw_card(1)
-            return None
 
 
 class Restriction:
@@ -218,7 +139,7 @@ class Game:
 
     def __init__(self):
         print("Makao!")
-        self.players = [Bot("Computer", self, 0), Player("Kamil", self, 1)]
+        self.players = [Player("Computer", 0), Player("Kamil", 1)]
         self.restriction = Restriction()
         self.card_pending = 0
         self.stops_pending = 0
@@ -247,6 +168,79 @@ class Game:
             else:
                 self.deck.shuffle()
 
+    def draw_card(self, player, quantity):
+        print("Draws", quantity, "cards")
+        for _ in range(quantity):
+            if self.deck.count():
+                player.hand.append(self.deck.draw())
+            else:
+                print("Empty deck, shuffling cards...")
+                time.sleep(3)
+                self.deck.cards = [card for card in self.table]
+                self.table.clear()
+                self.table.append(self.deck.cards.pop())
+                self.deck.shuffle()
+                player.hand.append(self.deck.draw())
+
+    def player_turn(self, player):
+        self.restriction.info()
+        card_to_put_on_table = list(map(int, input("Select: ").split()))
+
+        # option to draw card
+        if card_to_put_on_table[0] == len(player.hand):
+            self.draw_card(player, 1)
+            return None
+
+        # exit - temporary
+        elif card_to_put_on_table[0] == len(player.hand) + 1:
+            print("Exit successful!")
+            exit(0)
+
+        for card_index in card_to_put_on_table:
+            if player.hand[card_to_put_on_table[0]].value != player.hand[card_index].value:
+                print("Can't put this card on table")
+                self.draw_card(player, 1)
+                return None
+
+        cards = [player.hand[index] for index in card_to_put_on_table]
+
+        card = cards[0]
+        restriction = self.restriction(card, player)
+        if restriction == -1:
+            return None
+        elif (not card.is_playable(self.current()) or restriction == False) and restriction != 2:
+            print("Can't put this card on table")
+            self.draw_card(player, 1)
+            return None
+
+        player.hand = [_ for _ in player.hand if _ not in cards]
+        return cards
+
+    def bot_turn(self, player):
+        layable = []
+        for card in player.hand:
+            restriction = self.restriction(card, player, True)
+            if restriction and card.is_playable(self.current()) or restriction == 2:
+                layable.append([card])
+
+        if len(layable):
+            for card in layable:
+                for card_in_hand in player.hand:
+                    if card_in_hand != card[0] and card_in_hand.value == card[0].value:
+                        card.append(card_in_hand)
+
+            card = random.choice(layable)
+            player.hand = [_ for _ in player.hand if _ not in card]
+
+            return card
+
+        else:
+            restriction = self.restriction(player.hand[0], player, False)
+            if restriction == -1:
+                return None
+            self.draw_card(player, 1)
+            return None
+
     def two(self, player_id):
         card = self.current()
         self.card_pending += 2
@@ -259,7 +253,7 @@ class Game:
                 return True
             elif not mock:
                 print("Cards to draw " + str(self.card_pending))
-                player.draw_card(self.card_pending)
+                self.draw_card(self.players[player_id], self.card_pending)
                 self.card_pending = 0
                 return -1
             else:
@@ -279,7 +273,7 @@ class Game:
                 return True
             elif not mock:
                 print("Cards to draw " + str(self.card_pending))
-                player.draw_card(self.card_pending)
+                self.draw_card(self.players[player_id], self.card_pending)
                 self.card_pending = 0
                 return -1
             else:
@@ -289,7 +283,6 @@ class Game:
 
     def four(self, player_id):
         self.stops_pending += 1
-
         def four_restriction(changed, player, mock=False):
             if changed.value == CardValue.FOUR:
                 return True
@@ -361,7 +354,7 @@ class Game:
                     return True
                 elif not mock:
                     print("Cards to draw " + str(self.card_pending))
-                    player.draw_card(self.card_pending)
+                    self.draw_card(self.players[player_id], self.card_pending)
                     self.card_pending = 0
                     return -1
                 else:
@@ -457,7 +450,11 @@ class Game:
         print("Player #" + str(player_id) + " turn")
         print("Player #" + str(player_id) + " card count:", len(player.hand))
         time.sleep(1)
-        cards = player.put_on_table()
+
+        if player_id != 0:
+            cards = self.player_turn(player)
+        else:
+            cards = self.bot_turn(player)
 
         if cards is not None:
             for card in cards:
