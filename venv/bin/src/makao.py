@@ -6,8 +6,6 @@ from enum import IntEnum
 from collections import Counter
 from properties import CARDS_PATH
 
-
-
 # card values - name + value
 class CardValue(IntEnum):
     TWO = 2
@@ -44,7 +42,7 @@ SPECIAL_CARDS = frozenset(SPECIAL_CARDS)
 # card info
 class Card:
 
-    def __init__(self, suit, value, image):
+    def __init__(self, suit, value, image=None):
         self.suit = suit
         self.value = value
         self.image = image
