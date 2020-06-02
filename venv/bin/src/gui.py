@@ -1,10 +1,11 @@
+"""This module defines GUI of Macao card game"""
 import pygame
 import makao
 import properties
 import time
 
 # create screen
-screen = pygame.display.set_mode((properties.SCREEN_WIDTH, properties.SCREEN_HEIGHT))
+SCREEN = pygame.display.set_mode((properties.SCREEN_WIDTH, properties.SCREEN_HEIGHT))
 
 CARD_BACK_IMG = pygame.image.load(properties.CARDS_PATH + 'gray_back.png').convert_alpha()
 
@@ -13,70 +14,77 @@ SUITS = []
 for suit in makao.CardSuit:
     path = properties.CARDS_PIP_PATH + suit.value + '.png'
     image = pygame.image.load(path).convert_alpha()
-    rect = image.get_rect()
-    SUITS.append((image, rect))
+    rectangle = image.get_rect()
+    SUITS.append((image, rectangle))
 
-
-#### - message/rectangles/buttons functions
 def text_objects(text, font):
-    text_surface = font.render(text, True, (0,0,0))
+    """Helper function for text."""
+    text_surface = font.render(text, True, (0, 0, 0))
     return text_surface, text_surface.get_rect()
 
 def message_display(text, center, size=20):
+    """Writes text on screen."""
     font = pygame.font.SysFont(properties.FONT, size)
     text_surf, text_rect = text_objects(text, font)
     text_rect.center = center
-    screen.blit(text_surf, text_rect)
+    SCREEN.blit(text_surf, text_rect)
 
-def button(msg, x, y, w, h, ic, ac, text_pos=None):
+def button(msg, x, y, width, height, i_color, a_color, text_pos=None):
+    """Draws button on screen."""
     if text_pos is None:
-        text_pos = (x + w / 2, y + h / 2)
+        text_pos = (x + width / 2, y + height / 2)
 
     mouse = pygame.mouse.get_pos()
-    if x + w > mouse[0] > x and y + h > mouse[1] > y:
-        rect = pygame.draw.rect(screen, ac,(x,y,w,h))
+    if x + width > mouse[0] > x and y + height > mouse[1] > y:
+        rect = pygame.draw.rect(SCREEN, a_color, (x, y, width, height))
     else:
-        rect = pygame.draw.rect(screen, ic,(x,y,w,h))
+        rect = pygame.draw.rect(SCREEN, i_color, (x, y, width, height))
 
     message_display(msg, text_pos)
     return rect
 
-####
 def show_cards(game):
-    x, y = properties.SCREEN_WIDTH / 2 - 35 * len(game.players[1].hand) / 2, properties.SCREEN_HEIGHT / 10 * 8.5
+    """Draws player's cards on bottom of screen."""
+    x = properties.SCREEN_WIDTH / 2 - 35 * len(game.players[1].hand) / 2
+    y = properties.SCREEN_HEIGHT / 10 * 8.5
     cards = []
     for card in game.players[1].hand:
-        image = card.image
-        rect = image.get_rect()
+        card_image = card.image
+        rect = card_image.get_rect()
         rect.center = (x, y)
-        cards.append(screen.blit(image, rect))
+        cards.append(SCREEN.blit(card_image, rect))
         x += 35
     return cards
 
 def show_enemy_cards(game):
-    x, y = properties.SCREEN_WIDTH / 2 - 35 * len(game.players[0].hand) / 2, properties.SCREEN_HEIGHT / 10 * 1.5
+    """Draws upside down cards on top of screen."""
+    x = properties.SCREEN_WIDTH / 2 - 35 * len(game.players[0].hand) / 2
+    y = properties.SCREEN_HEIGHT / 10 * 1.5
     for _ in range(len(game.players[0].hand)):
         rect = CARD_BACK_IMG.get_rect()
         rect.center = (x, y)
-        screen.blit(CARD_BACK_IMG, rect)
+        SCREEN.blit(CARD_BACK_IMG, rect)
         x += 35
 
 def show_table(game):
+    """Draws cards on table up to 4 cards at a time."""
     x, y = properties.SCREEN_WIDTH / 2, properties.SCREEN_HEIGHT / 2
     for card in game.table[-4:]:
-        image = card.image
-        rect = image.get_rect()
+        card_image = card.image
+        rect = card_image.get_rect()
         rect.center = (x, y)
-        screen.blit(image, rect)
+        SCREEN.blit(card_image, rect)
         x += 30
 
 def show_deck():
+    """Draws deck on screen."""
     x, y = properties.SCREEN_WIDTH / 8, properties.SCREEN_HEIGHT / 2
     rect = CARD_BACK_IMG.get_rect()
     rect.center = (x, y)
-    return screen.blit(CARD_BACK_IMG, rect)
+    return SCREEN.blit(CARD_BACK_IMG, rect)
 
 def enemy_turn(game):
+    """Plays cards of bot player."""
     time.sleep(1)
     game.restriction.info()
     player = game.players[0]
@@ -94,7 +102,8 @@ def enemy_turn(game):
             game.table.append(_)
             game.make_restriction(0)
 
-def ace_restriction_select(mouse):
+def ace_restriction_select():
+    """Draws pips buttons to choose suit when special card ace is played."""
     x, y = properties.SCREEN_WIDTH / 2, properties.SCREEN_HEIGHT / 2
     width, height = SUITS[0][1].width, SUITS[0][1].height
     SUITS[0][1].center = (x - width / 2, y - height / 2)
@@ -102,85 +111,127 @@ def ace_restriction_select(mouse):
     SUITS[2][1].center = (x - width / 2, y + height / 2)
     SUITS[3][1].center = (x + width / 2, y + height / 2)
 
-    for index, suit in enumerate(makao.CardSuit):
-        black_rect = SUITS[index][1]
-        white_rect = black_rect.inflate(-3, -3)
+    for index, card_suit in enumerate(makao.CardSuit):
+        button(None, SUITS[0][1].center[0] - width / 2, SUITS[0][1].center[1] - height / 1.45,
+               2 * width, height / 5, properties.BLACK, properties.BLACK)
 
-        screen.fill(properties.BLACK, black_rect)
-        screen.fill(properties.GREY, white_rect)
-        screen.blit(SUITS[index][0], SUITS[index][1])
-        print('Drawing')
+        button('Choose suit', SUITS[0][1].center[0] - width / 2 + 5,
+               SUITS[0][1].center[1] - height / 1.45 + 5, 2 * width - 10,
+               height / 5 - 5, properties.BROWN, properties.BROWN)
 
-        # change colors while hovered
-        if SUITS[index][1].collidepoint(mouse):
-            screen.fill(properties.BLACK, black_rect)
-            screen.fill(properties.DARK_GREY, white_rect)
-            screen.blit(SUITS[index][0], SUITS[index][1])
-            print('Hovering!')
+        button(None, SUITS[index][1].center[0] - width / 2, SUITS[index][1].center[1] - height / 2,
+               width, height, properties.BLACK, properties.BLACK)
 
+        button(None, SUITS[index][1].center[0] - width / 2 + 5,
+               SUITS[index][1].center[1] - height / 2 + 5, width - 10, height - 10,
+               properties.GREY, properties.DARK_GREY)
+
+        SCREEN.blit(SUITS[index][0], SUITS[index][1])
+        if SUITS[index][1].collidepoint(pygame.mouse.get_pos()):
             for event in pygame.event.get():
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                    print('Clicking!!')
-                    print(suit)
-                    return suit
+                    return card_suit
 
-    pygame.display.update()
-    return True
+        pygame.display.update()
 
 def jack_restriction_select():
-    pass
+    """Draws number buttons to choose value when special card jack is played."""
+    x, y = properties.SCREEN_WIDTH / 2, properties.SCREEN_HEIGHT / 2
+    width, height = 120, 120
+
+    button(None, x - width * 2, y - height * 1.5, width * 4, height / 2,
+           properties.BLACK, properties.BLACK)
+    button('Choose value', x - width * 2 + 5, y - height * 1.5 + 5, width * 4 - 8, height / 2 - 8,
+           properties.BROWN, properties.BROWN)
+
+    buttons = []
+
+    ii = -2
+    for num in range(5, 9):
+        button(None, x + width * ii, y - height, width, height, properties.BLACK, properties.BLACK)
+        buttons.append(button(str(num), x + width * ii + 5, y - height + 5, width - 8, height - 8,
+                              properties.GREY, properties.DARK_GREY))
+        ii += 1
+
+    ii = -2
+    for num in range(9, 13):
+        if num == 11:
+            num = 'Q'
+        elif num == 12:
+            num = 'Nothing'
+
+        button(None, x + width * ii, y, width, height, properties.BLACK, properties.BLACK)
+        buttons.append(button(str(num), x + width * ii + 5, y + 5, width - 8, height - 8,
+                              properties.GREY, properties.DARK_GREY))
+        ii += 1
+
+    for index, value in enumerate(buttons):
+        if value.collidepoint(pygame.mouse.get_pos()):
+            if index != len(buttons) - 1:
+                change_value = makao.NOT_SPECIAL_VALUES[index]
+            else:
+                # change to None
+                change_value = 11
+            for event in pygame.event.get():
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    return change_value
+
+    pygame.display.update()
 
 def my_turn(game, index):
+    """Plays cards of human player."""
     player = game.players[1]
-    game.restriction.turn()
     cards = game.player_turn(player, index)
     if cards:
         for _ in cards:
             game.table.append(_)
-
-            select = False
-            while not select:
-                print('tutaj')
-                mouse = pygame.mouse.get_pos()
-                ace_restriction_select(mouse)
-
-            if _.value == makao.CardValue.ACE:
+            if _.value == makao.CardValue.JACK:
                 select = False
-                print('selected? ', select)
                 while not select:
+                    for event in pygame.event.get():
+                        pass
+                    select = jack_restriction_select()
+                if select == 11:
+                    select = None
+                game.make_restriction(1, select)
+            elif _.value == makao.CardValue.ACE:
+                select = False
+                while not select:
+                    for event in pygame.event.get():
+                        pass
                     ace_restriction_select()
-                    # select = ace_restriction_select()
-                    print('seleeeeeect')
-                    if select == makao.CardSuit.SPADES:
-                        break
-
+                    select = ace_restriction_select()
                 game.make_restriction(1, select)
             else:
                 game.make_restriction(1)
 
 def change_turn(game):
+    """Changes turn."""
     for player in game.players:
         player.toggle_turn()
     draw_gui(game)
 
 def popup(text):
-    rect_width = 350
+    """Draws popup on screen."""
+    rect_width = 400
     rect_height = 80
 
-    x, y = properties.SCREEN_WIDTH / 2 - rect_width / 2, (properties.SCREEN_HEIGHT * 2) / 3 - rect_height / 2
+    x = properties.SCREEN_WIDTH / 2 - rect_width / 2
+    y = (properties.SCREEN_HEIGHT * 2) / 3 - rect_height / 2
     center = (x + rect_width / 2, y + rect_height / 2)
     button(text,
-            x,
-            y,
-            rect_width,
-            rect_height,
-            properties.DARK_WHITE,
-            properties.DARK_WHITE,
-            (center[0], center[1] - rect_height / 3))
+           x,
+           y,
+           rect_width,
+           rect_height,
+           properties.DARK_WHITE,
+           properties.DARK_WHITE,
+           (center[0], center[1] - rect_height / 3))
 
     clicked = False
     width, height = 50, 50
-    rect = button('OK', center[0] - width / 2, center[1] - height / 4, width, height, properties.GREY, properties.DARK_GREY)
+    rect = button('OK', center[0] - width / 2, center[1] - height / 4,
+                  width, height, properties.GREY, properties.DARK_GREY)
     for event in pygame.event.get():
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             pos = pygame.mouse.get_pos()
@@ -191,66 +242,83 @@ def popup(text):
     return clicked
 
 def show_restriction(game):
+    """Draws rectangle showing restriction."""
+    for player in game.players:
+        if player.stop > 0:
+            button(player.name + ' waits ' + str(player.stop) + ' turns',
+                   0, 0, 200, 20, properties.DARK_WHITE, properties.DARK_WHITE)
+
     if game.players[1].turn:
         if game.restriction.info():
-            button(game.restriction.info(), 0, 0, 400, 25, properties.DARK_WHITE, properties.DARK_WHITE)
+            button(game.restriction.info(), 0, 0, 400, 25,
+                   properties.DARK_WHITE, properties.DARK_WHITE)
+            pygame.display.update()
 
 def check_if_can_play(game):
+    """Checks if player can play any cards."""
     player = game.players[1]
     if player.turn:
         if player.stop > 0:
-            print("player #" + str(player.player_id) + " waits", player.stop, "turns")
             player.stop -= 1
             game.restriction.turn()
-            print('is active? 1', game.restriction.active)
             change_turn(game)
             return
 
         playable = game.find_playable(player)
         if playable is None:
             closed_popup = False
-            print('is active? 2', game.restriction.active)
             while not closed_popup:
-                closed_popup = popup('You can\'t put any card. Drawing card...')
+                if game.restriction.active:
+                    if game.restriction.function.__name__ == 'four_restriction':
+                        closed_popup = popup('You can\'t put any card. You\'re waiting ' +
+                                             str(player.stop) + ' turns')
+                    else:
+                        closed_popup = popup('You can\'t put any card. Drawing card...')
+                else:
+                    closed_popup = popup('You can\'t put any card. Drawing card...')
 
+            draw_gui(game)
+            pygame.display.update()
             game.restriction.turn()
             change_turn(game)
 
 def draw_gui(game):
-    screen.fill(properties.BACKGROUND_COLOR)
+    """Fills background and draws all elements."""
+    SCREEN.fill(properties.BACKGROUND_COLOR)
     deck = show_deck()
     my_hand = show_cards(game)
     show_enemy_cards(game)
     show_table(game)
-
-
+    if game.players[0].turn:
+        button('Bot\'s turn', properties.SCREEN_WIDTH - 100, 0, 100, 20,
+               properties.DARK_WHITE, properties.DARK_WHITE)
+    else:
+        button('Your turn', properties.SCREEN_WIDTH - 100, 0, 100, 20,
+               properties.DARK_WHITE, properties.DARK_WHITE)
     return deck, my_hand
 
 def main():
     pygame.init()
-
     pygame.display.set_caption("Makao")
 
     macao = makao.Game()
+
     running = True
     while running:
         draw, my_cards = draw_gui(macao)
-
         check_if_can_play(macao)
         show_restriction(macao)
+
+        if not macao.win_con(0) or not macao.win_con(1):
+            closed_popup = False
+            while not closed_popup:
+                closed_popup = popup('End Game!')
+            running = False
 
         # enemy turn
         if macao.players[0].turn:
             enemy_turn(macao)
             change_turn(macao)
-
-        if not macao.win_con(0) or not macao.win_con(1):
-            # add popup to say who's won
-
-            # closed_popup = False
-            # while not closed_popup:
-                # closed_popup = popup('Player ')
-            running = False
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -258,7 +326,8 @@ def main():
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 pos = pygame.mouse.get_pos()
                 if macao.players[1].turn:
-                    # draw card
+
+                   #draw card
                     if draw.collidepoint(pos):
                         macao.draw_card(macao.players[1], 1)
                         draw, my_cards = draw_gui(macao)
@@ -276,11 +345,11 @@ def main():
                             my_turn(macao, index)
                             draw, my_cards = draw_gui(macao)
 
-                            # condition ensures user can click on cards that can't be played and nothing happens
-                            if hand_length != len(macao.players[1].hand) and table_length != len(macao.table):
+                            # condition ensures user can click on cards
+                            # that can't be played and nothing happens
+                            if hand_length != len(macao.players[1].hand) and \
+                                    table_length != len(macao.table):
                                 change_turn(macao)
-
-
 
         pygame.display.update()
 

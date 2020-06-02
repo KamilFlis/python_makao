@@ -1,13 +1,5 @@
-import makao
 import unittest
-import unittest.mock
-
-# Brak kart do dobrania w talii - oczekiwane zabrane karty ze stołu (oprócz ostatniej) i utworzona nowa talia - sprawdzenie długości listy przechowującej karty w talii i na stole.
-# Sprawdzenie czy można położyć kartę pasującą do zasad gry - oczekiwane położenie karty na stole.
-# Sprawdzenie czy można położyć kartę niepasującą do zasad gry - oczekiwana informacja, że nie można położyć tej karty.
-# Sprawdzenie warunku zwycięstwa (pusta "ręka" gracza) - oczekiwany komunikat o zwycięstwie danego gracza.
-# Dobieranie karty z talii - oczekiwane: karta z talii trafia do rąk gracza.
-# Test kart specjalnych i nałożonych poszczególnych restrykcji.
+import makao
 
 class GameTest(unittest.TestCase):
     def setUp(self):
@@ -87,9 +79,7 @@ class GameTest(unittest.TestCase):
         # given
         self.game.table.append(makao.Card(makao.CardSuit.HEARTS, makao.CardValue.JACK))
 
-        # mocking input value for demanding '6'
-        with unittest.mock.patch.object(__builtins__, 'input', lambda value: '6'):
-            self.game.make_restriction(1)
+        self.game.make_restriction(1, makao.CardValue.SIX)
 
         # when
         # puts jack
@@ -112,10 +102,7 @@ class GameTest(unittest.TestCase):
     def test_special_ace(self):
         # given
         self.game.table.append(makao.Card(makao.CardSuit.HEARTS, makao.CardValue.ACE))
-
-        # mocking input value for demanding 'SPADES'
-        with unittest.mock.patch.object(__builtins__, 'input', lambda value: '0'):
-            self.game.make_restriction(1)
+        self.game.make_restriction(1, makao.CardSuit.SPADES)
 
         # when
         # puts ace
