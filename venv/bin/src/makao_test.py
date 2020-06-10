@@ -1,4 +1,5 @@
 import unittest
+
 import makao
 
 class GameTest(unittest.TestCase):
@@ -21,9 +22,9 @@ class GameTest(unittest.TestCase):
         self.game.draw_card(self.game.players[0], amount)
 
         # then
-        self.assertEqual(len(self.game.table), 1, 'Number of cards on table should equal 1')
-        self.assertEqual(len(self.game.deck.cards), deck_len_expected, 'Number of cards in deck should be' + str(deck_len_expected))
-        self.assertEqual(len(self.game.players[0].hand), (5 + amount), 'Number of cards in hands player should be' + str((5 + amount)))
+        self.assertEqual(len(self.game.table), 1)
+        self.assertEqual(len(self.game.deck.cards), deck_len_expected)
+        self.assertEqual(len(self.game.players[0].hand), (5 + amount))
 
 
     # tests if card can be put on table if it is playable
@@ -46,7 +47,6 @@ class GameTest(unittest.TestCase):
 
     # tests if player won
     def test_player_won(self):
-
         # when
         # game not finished
         output_not_finished = self.game.win_con(0)
@@ -56,8 +56,8 @@ class GameTest(unittest.TestCase):
         output_finished = self.game.win_con(0)
 
         # then
-        self.assertTrue(output_not_finished, 'Win_con should return true, game is not finished yet')
-        self.assertFalse(output_finished, 'Win_con should return false, game is finished')
+        self.assertTrue(output_not_finished)
+        self.assertFalse(output_finished)
 
 
     # tests if drawn card is in player's hand
@@ -70,7 +70,7 @@ class GameTest(unittest.TestCase):
         output = self.game.players[0].hand[-1]
 
         # then
-        self.assertEqual(output, expected, 'Card in hand should be ' + str(expected) + ' not ' + str(output))
+        self.assertEqual(output, expected)
 
 
     # special cards tests
@@ -94,9 +94,9 @@ class GameTest(unittest.TestCase):
         output_demand = self.game.restriction(makao.Card(makao.CardSuit.CLUBS, demand), self.game.players[0])
 
         # then
-        self.assertEqual(output_jack, expected_jack, 'Output should be ' + str(expected_jack))
-        self.assertFalse(output_illegal, 'Output should be false')
-        self.assertTrue(output_demand, 'Output should be true')
+        self.assertEqual(output_jack, expected_jack)
+        self.assertFalse(output_illegal)
+        self.assertTrue(output_demand)
 
     # ace
     def test_special_ace(self):
@@ -117,9 +117,9 @@ class GameTest(unittest.TestCase):
         output_demand = self.game.restriction(makao.Card(demand, makao.CardValue.EIGHT), self.game.players[0])
 
         # then
-        self.assertEqual(output_ace, expected_ace, 'Output should be ' + str(expected_ace))
-        self.assertFalse(output_illegal, 'Output should be false')
-        self.assertTrue(output_demand, 'Output should be true')
+        self.assertEqual(output_ace, expected_ace)
+        self.assertFalse(output_illegal)
+        self.assertTrue(output_demand)
 
     # two
     def test_special_two(self):
@@ -148,11 +148,11 @@ class GameTest(unittest.TestCase):
         output_illegal = self.game.restriction(makao.Card(makao.CardSuit.HEARTS, makao.CardValue.THREE), self.game.players[1])
 
         # then
-        self.assertEqual(output_draw, expected_draw, 'Output should be' + str(expected_draw))
-        self.assertTrue(output_two, 'Should be true')
-        self.assertTrue(output_three, 'Should be true')
-        self.assertTrue(output_king, 'Should be true')
-        self.assertEqual(output_illegal, expected_illegal, 'Should be ' + str(expected_illegal))
+        self.assertEqual(output_draw, expected_draw)
+        self.assertTrue(output_two)
+        self.assertTrue(output_three)
+        self.assertTrue(output_king)
+        self.assertEqual(output_illegal, expected_illegal)
 
     # three
     def test_special_three(self):
@@ -181,11 +181,11 @@ class GameTest(unittest.TestCase):
         output_illegal = self.game.restriction(makao.Card(makao.CardSuit.HEARTS, makao.CardValue.TWO), self.game.players[1])
 
         # then
-        self.assertEqual(output_draw, expected_draw, 'Output should be' + str(expected_draw))
-        self.assertTrue(output_three, 'Should be true')
-        self.assertTrue(output_two, 'Should be true')
-        self.assertTrue(output_king, 'Should be true')
-        self.assertEqual(output_illegal, expected_illegal, 'Should be ' + str(expected_illegal))
+        self.assertEqual(output_draw, expected_draw)
+        self.assertTrue(output_three)
+        self.assertTrue(output_two)
+        self.assertTrue(output_king)
+        self.assertEqual(output_illegal, expected_illegal)
 
     # king
     def test_special_king(self):
@@ -212,11 +212,11 @@ class GameTest(unittest.TestCase):
         output_illegal = self.game.restriction(makao.Card(makao.CardSuit.CLUBS, makao.CardValue.TWO), self.game.players[1])
 
         # then
-        self.assertEqual(output_draw, expected_draw, 'Output should be' + str(expected_draw))
-        self.assertTrue(output_two, 'Should be true')
-        self.assertTrue(output_three, 'Should be true')
-        self.assertTrue(output_king, 'Should be true')
-        self.assertEqual(output_illegal, expected_illegal, 'Should be ' + str(expected_illegal))
+        self.assertEqual(output_draw, expected_draw)
+        self.assertTrue(output_two)
+        self.assertTrue(output_three)
+        self.assertTrue(output_king)
+        self.assertEqual(output_illegal, expected_illegal)
 
     # four
     def test_special_four(self):
@@ -238,9 +238,9 @@ class GameTest(unittest.TestCase):
         output_illegal = self.game.restriction(makao.Card(makao.CardSuit.SPADES, makao.CardValue.QUEEN), self.game.players[1])
 
         # then
-        self.assertEqual(output_wait, expected_wait, "Should be " +  str(expected_wait))
-        self.assertTrue(output_four, 'Should be true')
-        self.assertEqual(output_illegal, expected_illegal, 'Should be ' + str(expected_illegal))
+        self.assertEqual(output_wait, expected_wait)
+        self.assertTrue(output_four)
+        self.assertEqual(output_illegal, expected_illegal)
 
 
 if __name__ == '__main__':

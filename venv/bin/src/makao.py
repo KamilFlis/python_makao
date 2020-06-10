@@ -3,7 +3,9 @@ import random
 from enum import Enum
 from enum import IntEnum
 from collections import Counter
+
 import pygame
+
 from properties import CARDS_PATH
 
 # card values - name + value

@@ -1,8 +1,10 @@
 """This module defines GUI of Macao card game"""
+import time
+
 import pygame
+
 import makao
 import properties
-import time
 
 # create screen
 SCREEN = pygame.display.set_mode((properties.SCREEN_WIDTH, properties.SCREEN_HEIGHT))
@@ -90,7 +92,7 @@ def enemy_turn(game):
     player = game.players[0]
 
     if player.stop > 0:
-        print("player #" + str(player.player_id) + " waits", player.stop, "turns")
+        print('player #{} waits {} turns'.format(player.player_id, player.stop))
         player.stop -= 1
         game.restriction.turn()
         return
@@ -185,6 +187,7 @@ def my_turn(game, index):
     if cards:
         for _ in cards:
             game.table.append(_)
+            # jack - select requested value
             if _.value == makao.CardValue.JACK:
                 select = False
                 while not select:
@@ -194,6 +197,8 @@ def my_turn(game, index):
                 if select == 11:
                     select = None
                 game.make_restriction(1, select)
+
+            # ace - select requested suit
             elif _.value == makao.CardValue.ACE:
                 select = False
                 while not select:
@@ -219,13 +224,8 @@ def popup(text):
     x = properties.SCREEN_WIDTH / 2 - rect_width / 2
     y = (properties.SCREEN_HEIGHT * 2) / 3 - rect_height / 2
     center = (x + rect_width / 2, y + rect_height / 2)
-    button(text,
-           x,
-           y,
-           rect_width,
-           rect_height,
-           properties.DARK_WHITE,
-           properties.DARK_WHITE,
+    button(text, x, y, rect_width, rect_height,
+           properties.DARK_WHITE, properties.DARK_WHITE,
            (center[0], center[1] - rect_height / 3))
 
     clicked = False
@@ -298,11 +298,11 @@ def draw_gui(game):
     return deck, my_hand
 
 def main():
+    """This function plays the game."""
     pygame.init()
-    pygame.display.set_caption("Makao")
+    pygame.display.set_caption("Macao")
 
     macao = makao.Game()
-
     running = True
     while running:
         draw, my_cards = draw_gui(macao)
