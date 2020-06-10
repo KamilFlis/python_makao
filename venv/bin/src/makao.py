@@ -61,7 +61,7 @@ class Card:
         self.image = image
 
     def __str__(self):
-        return "{} of {}".format(self.value.name, self.suit.value)
+        return f'{self.value.name} of {self.suit.value}'
 
     def is_special(self):
         """Checks if card is in special cards."""
@@ -87,7 +87,7 @@ class Deck:
         """Builds deck of cards."""
         for suit in CardSuit:
             for val in CardValue:
-                path = CARDS_PATH + str(val.value) + str(suit.value) + '.png'
+                path = f'{CARDS_PATH}{val.value}{suit.value}.png'
                 self.cards.append(Card(suit, val, pygame.image.load(path)))
 
     def shuffle(self):
@@ -191,9 +191,10 @@ class Game:
     # gives player 5 cards and places 1 card on table
     def deal(self):
         """Deals 5 cards to players."""
+        number_of_cards_at_beginning = 5
         self.deck.shuffle()
         # add 5 cards to player's hand
-        for _ in range(5):
+        for _ in range(number_of_cards_at_beginning):
             for player in self.players:
                 player.hand.append(self.deck.draw())
 
@@ -373,7 +374,7 @@ class Game:
         if value is None:
             value = 'any ' + card.suit.value
 
-        self.restriction.create(jack_restriction, 2, 'You can put only jack or ' + str(value))
+        self.restriction.create(jack_restriction, 2, f'You can put only jack or {value}')
         if value is None:
             self.restriction.turn()
 
@@ -442,48 +443,9 @@ class Game:
             func(player_id, index)
 
     # win condition - empty hand means player won
-    def win_con(self, player_id):
+    def win_condition(self, player_id):
         """Condition to check if game is finished."""
         return False if not self.players[player_id].hand else True
-
-
-# def turn(game, player_id):
-#     """Plays in console."""
-#     # show top of table
-#     print("Cards in deck: " + str(game.deck.count()))
-#     print("Cards on table: " + str(len(game.table)))
-#     print("Table: ", end='')
-#     print(game.current())
-#     player = game.players[player_id]
-#
-#     if player.stop > 0:
-#         print("Player #" + str(player.player_id) + " waits", player.stop, "turns")
-#         player.stop -= 1
-#         return
-#
-#     game.restriction.turn()
-#
-#     if player_id != 0:
-#         player.show_hand()
-#
-#     print("Player #" + str(player_id) + " turn")
-#     print("Player #" + str(player_id) + " card count:", len(player.hand))
-#     time.sleep(1)
-#
-#     if player_id != 0:
-#         cards = game.player_turn(player, index)
-#     else:
-#         cards = game.bot_turn(player)
-#
-#     if cards is not None:
-#         for card in cards:
-#             print("Player #" + str(player_id) + " puts", card, "on table")
-#             game.table.append(card)
-#             if not game.win_con(player_id):
-#                 print("Player #" + str(player_id) + " won")
-#                 exit(0)
-#             game.make_restriction(player_id)
-
 
 
 if __name__ == "__main__":

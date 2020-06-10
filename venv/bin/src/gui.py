@@ -9,12 +9,12 @@ import properties
 # create screen
 SCREEN = pygame.display.set_mode((properties.SCREEN_WIDTH, properties.SCREEN_HEIGHT))
 
-CARD_BACK_IMG = pygame.image.load(properties.CARDS_PATH + 'gray_back.png').convert_alpha()
+CARD_BACK_IMG = pygame.image.load(f'{properties.CARDS_PATH}gray_back.png').convert_alpha()
 
 # suits for ace restriction select
 SUITS = []
 for suit in makao.CardSuit:
-    path = properties.CARDS_PIP_PATH + suit.value + '.png'
+    path = f'{properties.CARDS_PIP_PATH}{suit.value}.png'
     image = pygame.image.load(path).convert_alpha()
     rectangle = image.get_rect()
     SUITS.append((image, rectangle))
@@ -92,7 +92,6 @@ def enemy_turn(game):
     player = game.players[0]
 
     if player.stop > 0:
-        print('player #{} waits {} turns'.format(player.player_id, player.stop))
         player.stop -= 1
         game.restriction.turn()
         return
@@ -115,18 +114,18 @@ def ace_restriction_select():
 
     for index, card_suit in enumerate(makao.CardSuit):
         button(None, SUITS[0][1].center[0] - width / 2, SUITS[0][1].center[1] - height / 1.45,
-               2 * width, height / 5, properties.BLACK, properties.BLACK)
+               2 * width, height / 5, properties.FRAME_COLOR, properties.FRAME_COLOR)
 
         button('Choose suit', SUITS[0][1].center[0] - width / 2 + 5,
                SUITS[0][1].center[1] - height / 1.45 + 5, 2 * width - 10,
-               height / 5 - 5, properties.BROWN, properties.BROWN)
+               height / 5 - 5, properties.TABLE_CAPTION_COLOR, properties.TABLE_CAPTION_COLOR)
 
         button(None, SUITS[index][1].center[0] - width / 2, SUITS[index][1].center[1] - height / 2,
-               width, height, properties.BLACK, properties.BLACK)
+               width, height, properties.FRAME_COLOR, properties.FRAME_COLOR)
 
         button(None, SUITS[index][1].center[0] - width / 2 + 5,
                SUITS[index][1].center[1] - height / 2 + 5, width - 10, height - 10,
-               properties.GREY, properties.DARK_GREY)
+               properties.BUTTON_COLOR, properties.OVER_BUTTON_COLOR)
 
         SCREEN.blit(SUITS[index][0], SUITS[index][1])
         if SUITS[index][1].collidepoint(pygame.mouse.get_pos()):
@@ -142,17 +141,18 @@ def jack_restriction_select():
     width, height = 120, 120
 
     button(None, x - width * 2, y - height * 1.5, width * 4, height / 2,
-           properties.BLACK, properties.BLACK)
+           properties.FRAME_COLOR, properties.FRAME_COLOR)
     button('Choose value', x - width * 2 + 5, y - height * 1.5 + 5, width * 4 - 8, height / 2 - 8,
-           properties.BROWN, properties.BROWN)
+           properties.TABLE_CAPTION_COLOR, properties.TABLE_CAPTION_COLOR)
 
     buttons = []
 
     ii = -2
     for num in range(5, 9):
-        button(None, x + width * ii, y - height, width, height, properties.BLACK, properties.BLACK)
+        button(None, x + width * ii, y - height, width, height,
+               properties.FRAME_COLOR, properties.FRAME_COLOR)
         buttons.append(button(str(num), x + width * ii + 5, y - height + 5, width - 8, height - 8,
-                              properties.GREY, properties.DARK_GREY))
+                              properties.BUTTON_COLOR, properties.OVER_BUTTON_COLOR))
         ii += 1
 
     ii = -2
@@ -162,9 +162,10 @@ def jack_restriction_select():
         elif num == 12:
             num = 'Nothing'
 
-        button(None, x + width * ii, y, width, height, properties.BLACK, properties.BLACK)
+        button(None, x + width * ii, y, width, height,
+               properties.FRAME_COLOR, properties.FRAME_COLOR)
         buttons.append(button(str(num), x + width * ii + 5, y + 5, width - 8, height - 8,
-                              properties.GREY, properties.DARK_GREY))
+                              properties.BUTTON_COLOR, properties.OVER_BUTTON_COLOR))
         ii += 1
 
     for index, value in enumerate(buttons):
@@ -225,13 +226,13 @@ def popup(text):
     y = (properties.SCREEN_HEIGHT * 2) / 3 - rect_height / 2
     center = (x + rect_width / 2, y + rect_height / 2)
     button(text, x, y, rect_width, rect_height,
-           properties.DARK_WHITE, properties.DARK_WHITE,
+           properties.TEXT_BACKGROUND_COLOR, properties.TEXT_BACKGROUND_COLOR,
            (center[0], center[1] - rect_height / 3))
 
     clicked = False
     width, height = 50, 50
     rect = button('OK', center[0] - width / 2, center[1] - height / 4,
-                  width, height, properties.GREY, properties.DARK_GREY)
+                  width, height, properties.BUTTON_COLOR, properties.OVER_BUTTON_COLOR)
     for event in pygame.event.get():
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             pos = pygame.mouse.get_pos()
@@ -245,13 +246,13 @@ def show_restriction(game):
     """Draws rectangle showing restriction."""
     for player in game.players:
         if player.stop > 0:
-            button(player.name + ' waits ' + str(player.stop) + ' turns',
-                   0, 0, 200, 20, properties.DARK_WHITE, properties.DARK_WHITE)
+            button(f'{player.name} waits {player.stop} turns', 0, 0, 200, 20,
+                   properties.TEXT_BACKGROUND_COLOR, properties.TEXT_BACKGROUND_COLOR)
 
     if game.players[1].turn:
         if game.restriction.info():
             button(game.restriction.info(), 0, 0, 400, 25,
-                   properties.DARK_WHITE, properties.DARK_WHITE)
+                   properties.TEXT_BACKGROUND_COLOR, properties.TEXT_BACKGROUND_COLOR)
             pygame.display.update()
 
 def check_if_can_play(game):
@@ -291,10 +292,10 @@ def draw_gui(game):
     show_table(game)
     if game.players[0].turn:
         button('Bot\'s turn', properties.SCREEN_WIDTH - 100, 0, 100, 20,
-               properties.DARK_WHITE, properties.DARK_WHITE)
+               properties.TEXT_BACKGROUND_COLOR, properties.TEXT_BACKGROUND_COLOR)
     else:
         button('Your turn', properties.SCREEN_WIDTH - 100, 0, 100, 20,
-               properties.DARK_WHITE, properties.DARK_WHITE)
+               properties.TEXT_BACKGROUND_COLOR, properties.TEXT_BACKGROUND_COLOR)
     return deck, my_hand
 
 def main():
@@ -309,7 +310,7 @@ def main():
         check_if_can_play(macao)
         show_restriction(macao)
 
-        if not macao.win_con(0) or not macao.win_con(1):
+        if not macao.win_condition(0) or not macao.win_condition(1):
             closed_popup = False
             while not closed_popup:
                 closed_popup = popup('End Game!')

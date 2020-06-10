@@ -49,11 +49,11 @@ class GameTest(unittest.TestCase):
     def test_player_won(self):
         # when
         # game not finished
-        output_not_finished = self.game.win_con(0)
+        output_not_finished = self.game.win_condition(0)
 
         # game finished
         self.game.players[0].hand = []
-        output_finished = self.game.win_con(0)
+        output_finished = self.game.win_condition(0)
 
         # then
         self.assertTrue(output_not_finished)
