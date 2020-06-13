@@ -249,12 +249,9 @@ class Game:
         :param index: card index in hand
         :return: card that will be put on table or none
         """
-        card_to_put_on_table = [index]
-
+        card_to_put_on_table = index
         for card_index in card_to_put_on_table:
             if player.hand[card_to_put_on_table[0]].value != player.hand[card_index].value:
-                print('Can\'t put this card on table')
-                self.draw_card(player, 1)
                 return None
 
         cards = [player.hand[index] for index in card_to_put_on_table]
@@ -371,10 +368,11 @@ class Game:
                 return 2
             return False
 
+        info = f'You can put only jack or {value}'
         if value is None:
-            value = 'any ' + card.suit.value
+            info = 'You can put only jack'
 
-        self.restriction.create(jack_restriction, 2, f'You can put only jack or {value}')
+        self.restriction.create(jack_restriction, 2, info)
         if value is None:
             self.restriction.turn()
 

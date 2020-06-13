@@ -11,6 +11,9 @@ SCREEN = pygame.display.set_mode((properties.SCREEN_WIDTH, properties.SCREEN_HEI
 
 CARD_BACK_IMG = pygame.image.load(f'{properties.CARDS_PATH}gray_back.png').convert_alpha()
 
+INFO_IMG = pygame.image.load(properties.INFO_PATH).convert_alpha()
+CLOSE_BUTTON = pygame.image.load(properties.CLOSE_BUTTON_PATH).convert_alpha()
+
 # suits for ace restriction select
 SUITS = []
 for suit in makao.CardSuit:
@@ -19,15 +22,15 @@ for suit in makao.CardSuit:
     rectangle = image.get_rect()
     SUITS.append((image, rectangle))
 
-def text_objects(text, font):
+def text_objects(text, font, color):
     """Helper function for text."""
-    text_surface = font.render(text, True, (0, 0, 0))
+    text_surface = font.render(text, True, color)
     return text_surface, text_surface.get_rect()
 
-def message_display(text, center, size=20):
+def message_display(text, center, color=properties.BLACK_TEXT, size=20):
     """Writes text on screen."""
     font = pygame.font.SysFont(properties.FONT, size)
-    text_surf, text_rect = text_objects(text, font)
+    text_surf, text_rect = text_objects(text, font, color)
     text_rect.center = center
     SCREEN.blit(text_surf, text_rect)
 
@@ -44,6 +47,58 @@ def button(msg, x, y, width, height, i_color, a_color, text_pos=None):
 
     message_display(msg, text_pos)
     return rect
+
+def helper():
+    """Draw help button"""
+    help_rect = INFO_IMG.get_rect()
+    help_rect.center = (properties.SCREEN_WIDTH - 50, 50)
+    return SCREEN.blit(INFO_IMG, help_rect)
+
+def display_help():
+    """Display help screen after clicking help button"""
+    SCREEN.fill(properties.FRAME_COLOR)
+
+    close_rect = CLOSE_BUTTON.get_rect()
+    close_rect.center = (properties.SCREEN_WIDTH - 50, 50)
+    SCREEN.blit(CLOSE_BUTTON, close_rect)
+    width = properties.SCREEN_WIDTH / 2
+    height = 50
+    height_dx = 25
+    message_display('Game rules:', (width, height), properties.WHITE_TEXT)
+    message_display('You can put any card of the same suit or value as the one on table.',
+                    (width, height + height_dx), properties.WHITE_TEXT)
+    message_display('You can select more than 1 card of the same value.',
+                    (width, height + 2 * height_dx), properties.WHITE_TEXT)
+    message_display('After selecting cards click on confirm button.',
+                    (width, height + 3 * height_dx), properties.WHITE_TEXT)
+    message_display('Restriction made by special cards are shown on screen when special card is played.',
+                    (width, height + 4 * height_dx), properties.WHITE_TEXT)
+    message_display('If you don\'t have any card you can play card will be automatically drawn.',
+                    (width, height + 5 * height_dx), properties.WHITE_TEXT)
+    message_display('Special cards include:',
+                    (width, height + 6 * height_dx), properties.WHITE_TEXT)
+    message_display('Two\'s: Enemy has to draw 2 cards.',
+                    (width, height + 7 * height_dx), properties.WHITE_TEXT)
+    message_display('Three\'s: Enemy has to draw 3 cards.',
+                    (width, height + 8 * height_dx), properties.WHITE_TEXT)
+    message_display('Four\'s: Enemy waits turn.',
+                    (width, height + 9 * height_dx), properties.WHITE_TEXT)
+    message_display('Jack\'s: Can choose not special card.',
+                    (width, height + 10 * height_dx), properties.WHITE_TEXT)
+    message_display('King of Hearts and King of Spades: Enemy has to draw 5 cards.',
+                    (width, height + 11 * height_dx), properties.WHITE_TEXT)
+    message_display('Ace\'s: Can choose suit.',
+                    (width, height + 12 * height_dx), properties.WHITE_TEXT)
+
+    pygame.display.update()
+
+    # close help
+    for event in pygame.event.get():
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            if close_rect.collidepoint(pygame.mouse.get_pos()):
+                return False
+
+    return True
 
 def show_cards(game):
     """Draws player's cards on bottom of screen."""
@@ -271,8 +326,8 @@ def check_if_can_play(game):
             while not closed_popup:
                 if game.restriction.active:
                     if game.restriction.function.__name__ == 'four_restriction':
-                        closed_popup = popup('You can\'t put any card. You\'re waiting ' +
-                                             str(player.stop) + ' turns')
+                        closed_popup = popup(f'You can\'t put any card. You\'re waiting '
+                                             f'{player.stop} turns')
                     else:
                         closed_popup = popup('You can\'t put any card. Drawing card...')
                 else:
@@ -283,11 +338,12 @@ def check_if_can_play(game):
             game.restriction.turn()
             change_turn(game)
 
-def draw_gui(game):
+def draw_gui(game, cards=None):
     """Fills background and draws all elements."""
     SCREEN.fill(properties.BACKGROUND_COLOR)
     deck = show_deck()
     my_hand = show_cards(game)
+    info = helper()
     show_enemy_cards(game)
     show_table(game)
     if game.players[0].turn:
@@ -296,17 +352,23 @@ def draw_gui(game):
     else:
         button('Your turn', properties.SCREEN_WIDTH - 100, 0, 100, 20,
                properties.TEXT_BACKGROUND_COLOR, properties.TEXT_BACKGROUND_COLOR)
-    return deck, my_hand
+
+    return deck, my_hand, info
 
 def main():
     """This function plays the game."""
     pygame.init()
     pygame.display.set_caption("Macao")
 
+    # list to hold indexes of cards
+    cards_to_put_on_table = []
+    clicked = False
+
     macao = makao.Game()
     running = True
     while running:
-        draw, my_cards = draw_gui(macao)
+
+        draw, my_cards, info = draw_gui(macao)
         check_if_can_play(macao)
         show_restriction(macao)
 
@@ -321,17 +383,35 @@ def main():
             enemy_turn(macao)
             change_turn(macao)
 
+        # confirm button to put on table
+        if cards_to_put_on_table:
+            but = button('Confirm', properties.SCREEN_WIDTH / 2 - 40,
+                         properties.SCREEN_HEIGHT / 3 * 2 - 25, 80, 50,
+                         properties.BUTTON_COLOR, properties.OVER_BUTTON_COLOR)
+
+            if but.collidepoint(pygame.mouse.get_pos()):
+                clicked = True
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 pos = pygame.mouse.get_pos()
-                if macao.players[1].turn:
+                # information
+                if info.collidepoint(pos):
+                    SCREEN.fill(properties.FRAME_COLOR)
+                    help_on = True
+                    while help_on:
+                        help_on = display_help()
+                        # help_on = False
+                        pygame.display.update()
 
-                   #draw card
+                if macao.players[1].turn:
+                    #draw card
                     if draw.collidepoint(pos):
                         macao.draw_card(macao.players[1], 1)
-                        draw, my_cards = draw_gui(macao)
+                        cards_to_put_on_table.clear()
+                        draw, my_cards, info = draw_gui(macao)
                         change_turn(macao)
 
                     # select card to play
@@ -343,14 +423,22 @@ def main():
                         if card_pos.collidepoint(pos):
                             hand_length = len(macao.players[1].hand)
                             table_length = len(macao.table)
-                            my_turn(macao, index)
-                            draw, my_cards = draw_gui(macao)
 
-                            # condition ensures user can click on cards
-                            # that can't be played and nothing happens
-                            if hand_length != len(macao.players[1].hand) and \
-                                    table_length != len(macao.table):
-                                change_turn(macao)
+                            # can put more than 1 card
+                            if index not in cards_to_put_on_table:
+                                cards_to_put_on_table.append(index)
+
+                draw, my_cards, info = draw_gui(macao)
+                if clicked:
+                    my_turn(macao, cards_to_put_on_table)
+                    cards_to_put_on_table.clear()
+                    clicked = False
+
+                    # condition ensures user can click on cards
+                    # that can't be played and nothing happens
+                    if hand_length != len(macao.players[1].hand) and \
+                        table_length != len(macao.table):
+                            change_turn(macao)
 
         pygame.display.update()
 
