@@ -71,7 +71,8 @@ def display_help():
                     (width, height + 2 * height_dx), properties.WHITE_TEXT)
     message_display('After selecting cards click on confirm button.',
                     (width, height + 3 * height_dx), properties.WHITE_TEXT)
-    message_display('Restriction made by special cards are shown on screen when special card is played.',
+    message_display('Restriction made by special cards are shown on screen when '
+                    'special card is played.',
                     (width, height + 4 * height_dx), properties.WHITE_TEXT)
     message_display('If you don\'t have any card you can play card will be automatically drawn.',
                     (width, height + 5 * height_dx), properties.WHITE_TEXT)
@@ -437,8 +438,8 @@ def main():
                     # condition ensures user can click on cards
                     # that can't be played and nothing happens
                     if hand_length != len(macao.players[1].hand) and \
-                        table_length != len(macao.table):
-                            change_turn(macao)
+                            table_length != len(macao.table):
+                                change_turn(macao)
 
         pygame.display.update()
 
