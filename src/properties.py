@@ -2,10 +2,10 @@
 import os
 
 # image paths
-INFO_PATH = os.path.join('.', 'img', 'info.png')
-CLOSE_BUTTON_PATH = os.path.join('.', 'img', 'close.png')
-CARDS_PATH = os.path.join('.', 'img', 'cards/')
-CARDS_PIP_PATH = os.path.join('.', 'img', 'pips/')
+INFO_PATH = 'img/info.png'
+CLOSE_BUTTON_PATH = 'img/close.png'
+CARDS_PATH = os.path.join('img', 'cards/')
+CARDS_PIP_PATH = os.path.join('img', 'pips/')
 
 # screen resolution
 SCREEN_WIDTH = 1024
