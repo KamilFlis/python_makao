@@ -57,7 +57,6 @@ def helper():
 def display_help():
     """Display help screen after clicking help button"""
     SCREEN.fill(properties.FRAME_COLOR)
-
     close_rect = CLOSE_BUTTON.get_rect()
     close_rect.center = (properties.SCREEN_WIDTH - 50, 50)
     SCREEN.blit(CLOSE_BUTTON, close_rect)
@@ -368,7 +367,6 @@ def main():
     macao = makao.Game()
     running = True
     while running:
-
         draw, my_cards, info = draw_gui(macao)
         check_if_can_play(macao)
         show_restriction(macao)
@@ -377,7 +375,7 @@ def main():
             closed_popup = False
             while not closed_popup:
                 closed_popup = popup('End Game!')
-            running = False
+            break
 
         # enemy turn
         if macao.players[0].turn:
@@ -404,11 +402,10 @@ def main():
                     help_on = True
                     while help_on:
                         help_on = display_help()
-                        # help_on = False
                         pygame.display.update()
 
                 if macao.players[1].turn:
-                    #draw card
+                    # draw card
                     if draw.collidepoint(pos):
                         macao.draw_card(macao.players[1], 1)
                         cards_to_put_on_table.clear()

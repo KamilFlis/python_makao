@@ -444,7 +444,3 @@ class Game:
     def win_condition(self, player_id):
         """Condition to check if game is finished."""
         return False if not self.players[player_id].hand else True
-
-
-if __name__ == "__main__":
-    print("Not this file")
